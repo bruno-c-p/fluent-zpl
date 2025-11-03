@@ -254,7 +254,6 @@ export class Label {
     const { dpi, units } = this.cfg
     const x = toDots(o.at.x, dpi, units)
     const y = toDots(o.at.y, dpi, units)
-    const pos = o.position ?? 0
     const bank = o.bank ?? 'EPC'
     const offset = o.offset ?? 0
     const length = o.length ?? o.epc.length / 2 // hex pairs to words

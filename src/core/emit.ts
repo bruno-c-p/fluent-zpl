@@ -18,6 +18,8 @@ export function emit(tokens: Token[]): string {
           return new TextDecoder().decode(t.buf)
         case 'Raw':
           return t.text
+        default:
+          return ''
       }
     })
     .join('')

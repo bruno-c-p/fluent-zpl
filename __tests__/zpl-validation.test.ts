@@ -48,19 +48,6 @@ describe('ZPL Validation', () => {
     }
   }
 
-  /**
-   * Helper to validate font commands have proper parameters
-   */
-  function validateFontCommands(zpl: string) {
-    // Font commands should have family, orientation, and size parameters
-    const fontMatches = zpl.match(/\^A[A-Z0-9][NRI]\d*,\d*/g)
-    if (fontMatches) {
-      fontMatches.forEach((match) => {
-        expect(match).toMatch(/^\^A[A-Z0-9][NRI]\d*,\d*$/)
-      })
-    }
-  }
-
   describe('Basic Label Structure', () => {
     test('should generate valid ZPL structure for empty label', () => {
       const label = Label.create({ w: 400, h: 600 })

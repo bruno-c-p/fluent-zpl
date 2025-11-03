@@ -13,9 +13,11 @@ export class ImageRegistry {
   has(hash: string): boolean {
     return this.map.has(hash)
   }
+
   get(hash: string): string | undefined {
     return this.map.get(hash)
   }
+
   put(hash: string, grfName: string) {
     this.map.set(hash, grfName)
   }

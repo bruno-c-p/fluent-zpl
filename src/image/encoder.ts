@@ -75,9 +75,9 @@ export function monoFromRGBA(params: FromRGBAParams): MonoBitmap {
   // 1) Grayscale luminance (0..255) into a temp buffer
   const lum = new Uint8Array(width * height)
   for (let i = 0, j = 0; i < rgba.length; i += 4, j++) {
-    const r = rgba[i],
-      g = rgba[i + 1],
-      b = rgba[i + 2]
+    const r = rgba[i]
+    const g = rgba[i + 1]
+    const b = rgba[i + 2]
     // ITU-R BT.601 luma
     lum[j] = clamp255((r * 299 + g * 587 + b * 114) / 1000)
   }
