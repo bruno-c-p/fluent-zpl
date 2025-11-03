@@ -1,7 +1,20 @@
 // src/index.ts
+// Public API for @schie/fluent-zpl
 
-export * from './_types.js'
-export * from './_unit-helpers.js'
-export { emit } from './core/emit.ts'
-export { Label } from './core/label.ts'
-export { tokenizeZPL } from './core/parse.ts'
+// Core API
+export { Label } from './core/label.js'
+
+// Unit helpers
+export { dot, inch, mm, toDots } from './_unit-helpers.js'
+
+// Essential types for public API
+export type {
+  BarcodeOpts,
+  BoxOpts,
+  DPI,
+  LabelOptions,
+  Orientation,
+  RFIDOpts,
+  TextOpts,
+  Units
+} from './_types.js'

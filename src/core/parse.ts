@@ -63,8 +63,3 @@ export function findLastXZ(tokens: Token[]): number {
   }
   return tokens.length
 }
-
-/* TODOs:
- * - Byte-accurate handling for ~DG/^GF binary payloads. Consider a Uint8Array parser.
- * - Recognize ^FX...^FS comments as a structured token if you want metadata embedding.
- */

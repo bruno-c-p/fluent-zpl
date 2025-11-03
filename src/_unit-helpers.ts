@@ -1,7 +1,7 @@
 // src/_unit-helpers.ts
 // unit helpers for @schie/fluent-zpl
 
-import { DPI, Units } from './_types.ts'
+import { DPI, Units } from './_types.js'
 
 /* =====================================
  *  Unit Helpers
