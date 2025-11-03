@@ -427,6 +427,34 @@ export class Label {
 
     return result
   }
+
+  /** Set global default font (^CF) - affects all subsequent text fields that don't specify a font */
+  setDefaultFont(opts: {
+    family?: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | '0'
+    height?: number
+    width?: number
+  }): Label {
+    const family = opts.family ?? '0'
+    const height = clamp1(opts.height ?? 28)
+    const width = opts.width != null ? clamp1(opts.width) : height
+
+    const chunk = `^CF${family},${height},${width}`
+    return this._insertBeforeXZ(tokenizeZPL(chunk))
+  }
+
+  /** Set global barcode module settings (^BY) - affects all subsequent barcodes */
+  setBarcodeDefaults(opts: {
+    moduleWidth?: number
+    wideToNarrowRatio?: number
+    height?: number
+  }): Label {
+    const moduleWidth = clamp1(opts.moduleWidth ?? 2)
+    const ratio = clamp1(opts.wideToNarrowRatio ?? 3)
+    const height = opts.height != null ? clamp1(opts.height) : ''
+
+    const chunk = `^BY${moduleWidth},${ratio}${height ? ',' + height : ''}`
+    return this._insertBeforeXZ(tokenizeZPL(chunk))
+  }
 }
 
 /* local helpers */
