@@ -142,12 +142,14 @@ export interface BarcodeOpts {
  * - `size`: Specifies the width and height of the box.
  * - `border`: Optional border thickness of the box.
  * - `fill`: Optional fill color of the box, either black ('B') or white ('W').
+ * - `reverse`: Optional field reverse (^FR) - reverses the field colors within the box area.
  */
 export interface BoxOpts {
   at: { x: number; y: number }
   size: { w: number; h: number }
   border?: number
   fill?: 'B' | 'W'
+  reverse?: boolean
 }
 
 /**

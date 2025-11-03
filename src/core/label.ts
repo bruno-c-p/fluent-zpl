@@ -153,7 +153,8 @@ export class Label {
     const h = toDots(o.size.h, dpi, units)
     const t = clamp1(o.border ?? 1)
     const fill = o.fill ?? 'B'
-    const chunk = `^FO${x},${y}^GB${w},${h},${t},${fill},0^FS`
+    const reverse = o.reverse ? '^FR' : ''
+    const chunk = `^FO${x},${y}${reverse}^GB${w},${h},${t},${fill},0^FS`
     return this._insertBeforeXZ(tokenizeZPL(chunk))
   }
 
