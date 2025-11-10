@@ -78,6 +78,17 @@ describe('RFID Functionality', () => {
     expect(zpl).toContain('^RFR,E,0,8^FD^FS');
   });
 
+  test('rfidRead() still works when called without arguments', () => {
+    const label = Label.create({ w: 400, h: 600 }) as any
+    const result = label.rfidRead()
+    expect(result.toZPL()).toContain('^RFR,E,0,8^FD^FS')
+  })
+
+  test('should create RFID host buffer read command', () => {
+    const result = Label.create({ w: 400, h: 600 }).rfidRead({ bank: RFIDBank.HostBuffer })
+    expect(result.toZPL()).toContain('^RFR,H^FD^FS')
+  })
+
   test('should create RFID read command with partial defaults', () => {
     const result = Label.create({ w: 400, h: 600 }).rfidRead({
       bank: RFIDBank.USER,
@@ -106,4 +117,21 @@ describe('RFID Functionality', () => {
     expect(zpl).toMatch(/^\^XA.*\^XZ$/);
     expect(zpl).toMatch(/\^RFW,H\^FD[A-F0-9]+\^FS/);
   });
+
+  test('should reject HostBuffer writes', () => {
+    expect(() =>
+      Label.create({ w: 400, h: 600 }).rfid({
+        epc: 'AA',
+        bank: RFIDBank.HostBuffer,
+      })
+    ).toThrow('HostBuffer is read-only')
+  })
+
+  test('rfidRead() should fail on unsupported bank', () => {
+    expect(() =>
+      Label.create({ w: 400, h: 600 }).rfidRead({
+        bank: 'INVALID' as RFIDBank,
+      })
+    ).toThrow('Unsupported RFID bank')
+  })
 });

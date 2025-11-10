@@ -1,8 +1,8 @@
-import { zpl } from '../src/index'
+import { label as labelTemplate } from '../src/index'
 
-describe('ZPL Tagged Template', () => {
+describe('Label Tagged Template', () => {
   test('should parse simple ZPL template literal', () => {
-    const label = zpl`
+    const label = labelTemplate`
       ^XA
       ^FO50,100^A0N,28,28^FDHello World^FS
       ^XZ
@@ -20,7 +20,7 @@ describe('ZPL Tagged Template', () => {
     const x = 75
     const y = 125
 
-    const label = zpl`
+    const label = labelTemplate`
       ^XA
       ^FO${x},${y}^A0N,28,28^FD${text}^FS
       ^XZ
@@ -31,8 +31,8 @@ describe('ZPL Tagged Template', () => {
     expect(output).toContain('^FDDynamic Text^FS')
   })
 
-  test('should allow chaining fluent methods after zpl', () => {
-    const label = zpl`
+  test('should allow chaining fluent methods after label template', () => {
+    const label = labelTemplate`
       ^XA
       ^FO50,50^A0N,28,28^FDOriginal Text^FS
       ^XZ
@@ -52,7 +52,7 @@ describe('ZPL Tagged Template', () => {
     const address2 = 'Anytown, NY 12345'
     const trackingNumber = 'TRK123456789'
 
-    const label = zpl`
+    const label = labelTemplate`
       ^XA
       ^CF0,30
       ^FO50,50^FD${companyName}^FS
@@ -73,7 +73,7 @@ describe('ZPL Tagged Template', () => {
   })
 
   test('should support withOptions syntax for DPI and units', () => {
-    const label = zpl.withOptions({ dpi: 300, units: 'mm' })`
+    const label = labelTemplate.withOptions({ dpi: 300, units: 'mm' })`
       ^XA
       ^FO10,10^A0N,28,28^FDHigh DPI^FS
       ^XZ
@@ -87,7 +87,7 @@ describe('ZPL Tagged Template', () => {
   })
 
   test('should handle empty template', () => {
-    const label = zpl`^XA^XZ`
+    const label = labelTemplate`^XA^XZ`
 
     const output = label.toZPL()
     expect(output).toContain('^XA')
@@ -95,7 +95,7 @@ describe('ZPL Tagged Template', () => {
   })
 
   test('should normalize line endings and whitespace', () => {
-    const label = zpl`
+    const label = labelTemplate`
       
       ^XA
       
@@ -116,7 +116,7 @@ describe('ZPL Tagged Template', () => {
     const height = 600
     const fontSize = 28
 
-    const label = zpl`
+    const label = labelTemplate`
       ^XA
       ^LL${height}
       ^FO50,50^A0N,${fontSize},${fontSize}^FDSize: ${width}x${height}^FS
@@ -133,7 +133,7 @@ describe('ZPL Tagged Template', () => {
     const trackingNumber = '1Z999AA1234567890'
     const recipientName = 'John Smith'
 
-    const label = zpl`
+    const label = labelTemplate`
       ^XA
       ^FX Shipping label example
       ^CF0,60

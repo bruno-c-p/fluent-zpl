@@ -94,6 +94,54 @@ export interface LabelOptions {
 }
 
 /* =====================================
+ *  Printer / Job Configuration
+ * ===================================== */
+
+/**
+ * Supported printer modes for the ^MM command.
+ */
+export enum PrinterMode {
+  TearOff = 'T',
+  PeelOff = 'P',
+  Rewind = 'R',
+  Applicator = 'A',
+  Cutter = 'C',
+}
+
+/**
+ * Media tracking strategies for the ^MN command.
+ */
+export enum MediaTracking {
+  Continuous = 'N',
+  NonContinuous = 'Y',
+  Mark = 'Z',
+}
+
+/**
+ * Options for building printer configuration blocks outside of label formats.
+ */
+export interface PrinterConfigOpts {
+  /** Print mode selection (^MM) */
+  mode?: PrinterMode;
+  /** Media tracking / sensor strategy (^MN) */
+  mediaTracking?: MediaTracking;
+  /** Print width (^PW). Uses the current unit context. */
+  printWidth?: number;
+  /** Print speed component (^PR) */
+  printSpeed?: number;
+  /** Slew speed component (^PR) */
+  slewSpeed?: number;
+  /** Backfeed speed component (^PR) */
+  backfeedSpeed?: number;
+  /** Darkness setting (^MD) */
+  darkness?: number;
+  /** Label home offset (^LH) */
+  labelHome?: Position;
+  /** Pass-through commands appended after the typed options. */
+  additionalCommands?: string[];
+}
+
+/* =====================================
  *  Field / Element Types
  * ===================================== */
 
@@ -198,6 +246,7 @@ export enum Fill {
  * - EPC: Electronic Product Code bank - stores the main product identifier
  * - TID: Tag Identifier bank - contains unique tag information (read-only)
  * - USER: User memory bank - available for custom application data
+ * - HostBuffer: Volatile buffer returned by ^RFR,H (read-only convenience)
  *
  * EPC is the most commonly used bank for product identification.
  * TID contains manufacturer and model information.
@@ -207,6 +256,7 @@ export enum RFIDBank {
   EPC = 'EPC',
   TID = 'TID',
   USER = 'USER',
+  HostBuffer = 'HOST',
 }
 
 /**
@@ -441,9 +491,9 @@ export interface EPCOpts {
  * @remarks
  * This interface defines the configuration options for reading RFID tag data:
  * - `at`: Optional position coordinates.
- * - `bank`: Optional memory bank to read from.
- * - `offset`: Optional offset within the memory bank.
- * - `length`: Optional length of data to read.
+ * - `bank`: Optional memory bank to read from. Use `HostBuffer` to emit `^RFR,H`.
+ * - `offset`: Optional offset within the memory bank (ignored for HostBuffer).
+ * - `length`: Optional length of data to read (ignored for HostBuffer).
  * - `password`: Optional password for protected operations.
  */
 export interface RFIDReadOpts {

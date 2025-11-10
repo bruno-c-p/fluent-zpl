@@ -26,6 +26,7 @@ import {
 } from '../image/api.js';
 import { emit } from './emit.js';
 import { findLastXZ, tokenizeZPL } from './parse.js';
+import { buildRFIDReadTokens, buildRFIDWriteTokens } from './rfid.js';
 
 /**
  * ZPL Label class
@@ -261,38 +262,12 @@ export class Label {
 
   /** RFID field for EPC encoding */
   rfid(o: RFIDOpts): Label {
-    // Your working pattern: ^RFW,H^FD{epcValue}^FS
-    // Let's match this exactly but allow for different banks
-    const bank = o.bank ?? RFIDBank.EPC;
-    const offset = o.offset ?? 0;
-    const length = o.length ?? o.epc.length / 2;
-
-    let writeCmd = '';
-    switch (bank) {
-      case RFIDBank.EPC:
-        writeCmd = `^RFW,H`; // Matches your working ZPL exactly
-        break;
-      case RFIDBank.USER:
-        writeCmd = `^RFW,U,${offset},${length}`;
-        break;
-      case RFIDBank.TID:
-        writeCmd = `^RFW,T,${offset},${length}`;
-        break;
-    }
-
-    const chunk = `${writeCmd}^FD${o.epc}^FS`;
-    return this._insertBeforeXZ(tokenizeZPL(chunk));
+    return this._insertBeforeXZ(buildRFIDWriteTokens(o));
   }
 
   /** Read RFID tag data */
   rfidRead(o: RFIDReadOpts): Label {
-    const bank = o.bank ?? RFIDBank.EPC;
-    const offset = o.offset ?? 0;
-    const length = o.length ?? 8;
-
-    const readCmd = `^RFR,${bank.charAt(0)},${offset},${length}`;
-    const chunk = `${readCmd}^FD^FS`;
-    return this._insertBeforeXZ(tokenizeZPL(chunk));
+    return this._insertBeforeXZ(buildRFIDReadTokens(o));
   }
 
   /** EPC encoding convenience method */

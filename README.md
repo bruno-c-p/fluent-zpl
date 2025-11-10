@@ -25,6 +25,7 @@ A modern, type-safe TypeScript library for generating **ZPL (Zebra Programming L
 - 📱 **Tree Shakeable** - Import only what you need
 - 🖼️ **Image Support** - Convert RGBA images to ZPL bitmaps
 - 📡 **RFID/EPC Support** - Encode and read RFID tags with EPC data
+- 🏗️ **Program Builder** - Compose printer setup, diagnostics, labels, and RFID commands into one payload
 - 📦 **Zero Dependencies** - Lightweight and fast
 
 ## 🚀 Quick Start
@@ -64,6 +65,68 @@ const zpl = label.toZPL();
 console.log(zpl);
 // Output: ^XA^LL600^FO50,50^ABN32,32^FDPRIORITY MAIL^FS...^XZ
 ```
+
+### Printer / Job Orchestration
+
+Use `ZPLProgram` when you need more than a single label format. It lets you compose printer/media configuration, label formats, downloads, diagnostics, and RFID commands into one immutable payload.
+
+```typescript
+import {
+  ZPLProgram,
+  PrinterMode,
+  MediaTracking,
+  Label,
+  FontFamily,
+  Barcode,
+  RFIDBank,
+} from '@schie/fluent-zpl';
+
+const program = ZPLProgram.create()
+  .printerConfig({
+    mode: PrinterMode.TearOff,
+    mediaTracking: MediaTracking.NonContinuous,
+    printWidth: 801,
+    printSpeed: 4,
+    darkness: 10,
+    labelHome: { x: 0, y: 0 },
+    additionalCommands: ['^JUS'], // passthrough for commands we don't model yet
+  })
+  .label(
+    (label) =>
+      label
+        .text({
+          at: { x: 40, y: 60 },
+          text: 'Config + Label + RFID',
+          font: { family: FontFamily.B, h: 32, w: 32 },
+        })
+        .barcode({
+          at: { x: 40, y: 140 },
+          type: Barcode.Code128,
+          data: '1234567890',
+          height: 100,
+        })
+        .rfid({ epc: '300833B2DDD9014000000000' }),
+    { w: 400, h: 600 }
+  )
+  .rfidRead({ bank: RFIDBank.HostBuffer }); // emits ^RFR,H (read last write)
+
+// Mix in downloads, diagnostics, or templates with .raw()
+const payload = program
+  .raw('^XA^HH^XZ') // printer status block
+  .comment('End of job')
+  .toZPL();
+
+console.log(payload);
+```
+
+`ZPLProgram` keeps track of the same DPI/unit context as your labels, so printer/media measurements (`^PW`, `^LH`, etc.) stay consistent. A single program can now cover:
+
+- Label formats and layout (`.label(...)`)
+- Printer/media configuration (`.printerConfig(...)`)
+- Control, status, or diagnostics commands (`.raw(...)`, `.comment(...)`)
+- Variable/templated data via regular JavaScript functions (pass a factory into `.label`)
+- Graphics/downloads (`.raw('~DG...')`, `.imageInline(...)` inside labels)
+- Advanced RFID/EPC flows (`.rfid(...)`, `.rfidRead(...)`, including HostBuffer reads)
 
 ## 📖 Documentation
 
@@ -221,7 +284,7 @@ label.epc({
 label.rfid({
   at: { x: 50, y: 100 },
   epc: '1234567890ABCDEF',
-  bank: 'USER', // EPC, TID, or USER
+  bank: RFIDBank.USER,
   offset: 0,
   length: 8,
   password: '00000000',
@@ -230,11 +293,18 @@ label.rfid({
 // Read RFID tag data
 label.rfidRead({
   at: { x: 50, y: 100 },
-  bank: 'EPC',
+  bank: RFIDBank.EPC,
   offset: 0,
   length: 12,
 });
+
+// Read the volatile HostBuffer (^RFR,H) after a write
+label.rfidRead({
+  bank: RFIDBank.HostBuffer,
+});
 ```
+
+`RFIDBank.HostBuffer` maps directly to `^RFR,H`, which instructs the printer to return the contents of the last write buffer—perfect for verifying recently encoded tags before moving on.
 
 ### Comments and Metadata
 
@@ -292,18 +362,18 @@ label
 
 These global settings generate the exact ZPL commands (`^CF`, `^BY`, `^FR`) found in complex label specifications, enabling precise control over printer behavior and optimized ZPL output.
 
-### ZPL Tagged Template
+### Label Tagged Template
 
-Parse existing ZPL strings directly into Label instances using the `zpl` tagged template:
+Parse existing ZPL strings directly into Label instances using the `label` tagged template:
 
 ```typescript
-import { zpl } from '@schie/fluent-zpl';
+import { label } from '@schie/fluent-zpl';
 
 // Parse ZPL with template interpolation
 const trackingNumber = '1Z999AA1234567890';
 const customerName = 'John Doe';
 
-const label = zpl`
+const parsedLabel = label`
   ^XA
   ^FX Shipping label from existing ZPL
   ^CF0,60
@@ -315,7 +385,7 @@ const label = zpl`
 `;
 
 // Continue with fluent API
-label
+parsedLabel
   .comment('Added via fluent API')
   .text({ at: { x: 50, y: 350 }, text: 'Processed by fluent-zpl' })
   .toZPL();
@@ -324,7 +394,7 @@ label
 Alternative syntax with explicit options:
 
 ```typescript
-const label = zpl.withOptions({ dpi: 300, units: Units.Millimeter })`
+const parsedLabel = label.withOptions({ dpi: 300, units: Units.Millimeter })`
   ^XA
   ^FO10,10^A0N,28,28^FDHigh Resolution^FS
   ^XZ
@@ -491,12 +561,12 @@ const complexLabel = Label.create({ w: 800, h: 1200, units: 'dot', dpi: 203 })
   .barcode({
     at: { x: 100, y: 550 },
     type: 'Code128',
-    data: '12345678'
+    data: '12345678',
     // Height comes from global ^BY setting
   })
 
   .setDefaultFont({ family: 'F', height: 190 })
-  .text({ at: { x: 470, y: 955 }, text: 'CA' })
+  .text({ at: { x: 470, y: 955 }, text: 'CA' });
 ```
 
 ## 🧪 Testing and Validation
@@ -556,9 +626,18 @@ const zpl = label.toZPL();
   - `.setBarcodeDefaults(opts)` - Set global barcode settings (^BY)
   - `.toZPL()` - Generate ZPL string
 
-- **`zpl`** - Tagged template for ZPL parsing with interpolation
-  - `zpl\`...\`` - Parse ZPL template literal
-  - `zpl.withOptions(opts)\`...\`` - Parse with label options
+- **`ZPLProgram`** - Compose printer setup + formats
+  - `ZPLProgram.create(opts)` - Start a new program (sets DPI/units context)
+  - `.raw(zpl)` - Append arbitrary commands (diagnostics, downloads, etc.)
+  - `.comment(text)` - Insert ^FX comments between sections
+  - `.printerConfig(opts)` - Emit typed ^MM/^MN/^PW/^PR/^MD/^LH blocks
+  - `.label(labelOrFactory, options?)` - Append a fluent `Label` (^XA…^XZ)
+  - `.rfid(opts)` / `.rfidRead(opts)` - Emit RFID commands outside labels
+  - `.toZPL()` - Serialize the final job payload
+
+- **`label` (tagged template)** - Parse ZPL strings with interpolation
+  - `label\`...\`` - Parse ZPL template literal
+  - `label.withOptions(opts)\`...\`` - Parse with explicit DPI/units
 
 ### Utilities
 

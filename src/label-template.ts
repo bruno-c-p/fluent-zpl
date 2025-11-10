@@ -1,5 +1,5 @@
-// src/zpl.ts
-// Tagged template for ZPL parsing
+// src/label-template.ts
+// Tagged template for building Label instances from raw ZPL
 
 import type { DPI } from './_types.js'
 import { Units } from './_types.js'
@@ -9,7 +9,7 @@ import { Label } from './core/label.js'
  * Tagged template literal for parsing ZPL strings into Label instances.
  *
  * @remarks
- * The `zpl` tagged template allows you to embed ZPL code directly in your TypeScript/JavaScript
+ * The `label` tagged template allows you to embed ZPL code directly in your TypeScript/JavaScript
  * and get back a fluent Label instance that you can continue to chain methods on.
  *
  * Template literals can include interpolated values using ${} syntax, which will be
@@ -17,11 +17,11 @@ import { Label } from './core/label.js'
  *
  * @example
  * ```typescript
- * import { zpl } from '@schie/fluent-zpl'
+ * import { label } from '@schie/fluent-zpl'
  *
  * const trackingNumber = '1234567890'
  *
- * const label = zpl`
+ * const myLabel = label`
  *   ^XA
  *   ^FO50,50^A0N,28,28^FDShipping Label^FS
  *   ^FO50,100^BCN,80,Y,N,N^FD${trackingNumber}^FS
@@ -29,20 +29,20 @@ import { Label } from './core/label.js'
  * `
  *
  * // Continue chaining fluent methods
- * label.text({ at: { x: 50, y: 200 }, text: 'Additional text' })
- *      .toZPL()
+ * myLabel.text({ at: { x: 50, y: 200 }, text: 'Additional text' })
+ *        .toZPL()
  * ```
  *
  * @param strings - Template literal string parts
  * @param values - Interpolated values
  * @returns Label instance for continued chaining
  */
-export function zpl(strings: TemplateStringsArray, ...values: (string | number)[]): Label
-export function zpl(
+export function label(strings: TemplateStringsArray, ...values: (string | number)[]): Label
+export function label(
   strings: TemplateStringsArray,
   ...args: [...(string | number)[], { dpi?: DPI; units?: Units }]
 ): Label
-export function zpl(
+export function label(
   strings: TemplateStringsArray,
   ...args: (string | number | { dpi?: DPI; units?: Units })[]
 ): Label {
@@ -80,19 +80,19 @@ export function zpl(
 }
 
 /**
- * Alternative syntax for zpl with explicit options
+ * Alternative syntax for the label template with explicit options
  *
  * @example
  * ```typescript
- * const label = zpl.withOptions({ dpi: 300, units: 'mm' })`
+ * const myLabel = label.withOptions({ dpi: 300, units: 'mm' })`
  *   ^XA
  *   ^FO50,50^A0N,28,28^FDHigh DPI Label^FS
  *   ^XZ
  * `
  * ```
  */
-zpl.withOptions = function (options: { dpi?: DPI; units?: Units }) {
+label.withOptions = function (options: { dpi?: DPI; units?: Units }) {
   return function (strings: TemplateStringsArray, ...values: (string | number)[]): Label {
-    return zpl(strings, ...values, options)
+    return label(strings, ...values, options)
   }
 }

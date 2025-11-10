@@ -3,12 +3,14 @@
 
 // Core API
 export { Label } from './core/label.js';
+export { ZPLProgram } from './core/program.js';
+export type { ProgramOptions } from './core/program.js';
 
 // Unit helpers
 export { dot, inch, mm, toDots } from './_unit-helpers.js';
 
-// Tagged template for ZPL parsing
-export { zpl } from './zpl.js';
+// Tagged template for parsing labels
+export { label } from './label-template.js';
 
 // Enums for values (not just types)
 export {
@@ -16,7 +18,9 @@ export {
   Fill,
   FontFamily,
   Justify,
+  MediaTracking,
   Orientation,
+  PrinterMode,
   QRErrorCorrection,
   RFIDBank,
   Units,
@@ -32,6 +36,7 @@ export type {
   EPCOpts,
   GS1_128Opts,
   LabelOptions,
+  PrinterConfigOpts,
   Position,
   QRCodeOpts,
   RFIDOpts,
