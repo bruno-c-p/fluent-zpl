@@ -60,9 +60,8 @@ export class Label {
     if (opts.orientation) head.push(`^PO${opts.orientation}`);
     if (opts.origin)
       head.push(`^LH${toDots(opts.origin.x, dpi, units)},${toDots(opts.origin.y, dpi, units)}`);
+    head.push(`^PW${toDots(opts.w, dpi, units)}`);
     head.push(`^LL${toDots(opts.h, dpi, units)}`);
-
-    // If you want to store width explicitly later, you can add ^PW here as well.
 
     const tokens = tokenizeZPL(head.join('') + '^XZ');
     return new Label(tokens, { dpi, units });
