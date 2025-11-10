@@ -38,30 +38,30 @@ npm install @schie/fluent-zpl
 ### Basic Usage
 
 ```typescript
-import { Label } from '@schie/fluent-zpl'
+import { Label, FontFamily, Barcode, Units, Orientation, Justify, Fill } from '@schie/fluent-zpl';
 
 // Create a shipping label
 const label = Label.create({ w: 400, h: 600, dpi: 203 })
   .text({
     at: { x: 50, y: 50 },
     text: 'PRIORITY MAIL',
-    font: { family: 'B', h: 32, w: 32 }
+    font: { family: FontFamily.B, h: 32, w: 32 },
   })
   .addressBlock({
     at: { x: 50, y: 120 },
     lines: ['John Doe', '123 Main Street', 'Anytown, NY 12345'],
-    lineHeight: 25
+    lineHeight: 25,
   })
   .barcode({
     at: { x: 50, y: 300 },
-    type: 'Code128',
+    type: Barcode.Code128,
     data: '1Z999AA1234567890',
-    height: 100
-  })
+    height: 100,
+  });
 
 // Generate ZPL
-const zpl = label.toZPL()
-console.log(zpl)
+const zpl = label.toZPL();
+console.log(zpl);
 // Output: ^XA^LL600^FO50,50^ABN32,32^FDPRIORITY MAIL^FS...^XZ
 ```
 
@@ -71,27 +71,27 @@ console.log(zpl)
 
 ```typescript
 // Create with dots (default)
-const label1 = Label.create({ w: 400, h: 600 })
+const label1 = Label.create({ w: 400, h: 600 });
 
 // Create with millimeters
 const label2 = Label.create({
   w: 100,
   h: 150,
-  units: 'mm',
-  dpi: 203
-})
+  units: Units.Millimeter,
+  dpi: 203,
+});
 
 // Create with inches
 const label3 = Label.create({
   w: 4,
   h: 6,
-  units: 'in',
+  units: Units.Inch,
   dpi: 203,
-  orientation: 'R' // Rotate 90°
-})
+  orientation: Orientation.Rotated90, // Rotate 90°
+});
 
 // Parse existing ZPL
-const existing = Label.parse('^XA^FO50,100^FDHello^FS^XZ')
+const existing = Label.parse('^XA^FO50,100^FDHello^FS^XZ');
 ```
 
 ### Text and Fonts
@@ -102,15 +102,15 @@ label
   .text({
     at: { x: 50, y: 100 },
     text: 'Hello World',
-    font: { family: 'A', h: 28, w: 28 }
+    font: { family: FontFamily.A, h: 28, w: 28 },
   })
 
   // Text with rotation
   .text({
     at: { x: 100, y: 200 },
     text: 'Rotated Text',
-    rotate: 'R', // 90° clockwise
-    font: { family: 'B', h: 20, w: 20 }
+    rotate: Orientation.Rotated90, // 90° clockwise
+    font: { family: FontFamily.B, h: 20, w: 20 },
   })
 
   // Text with wrapping
@@ -120,16 +120,16 @@ label
     wrap: {
       width: 200,
       lines: 3,
-      justify: 'C' // Center justified
-    }
+      justify: Justify.Center, // Center justified
+    },
   })
 
   // Convenience method for simple text
   .caption({
     at: { x: 50, y: 400 },
     text: 'Simple Caption',
-    size: 24
-  })
+    size: 24,
+  });
 ```
 
 ### Barcodes
@@ -139,22 +139,22 @@ label
   // Code 128 barcode
   .barcode({
     at: { x: 50, y: 100 },
-    type: 'Code128',
+    type: Barcode.Code128,
     data: '1234567890',
-    height: 80
+    height: 80,
   })
 
   // QR Code
   .qr({
     at: { x: 200, y: 100 },
     text: 'https://example.com',
-    module: 4
+    module: 4,
   })
 
   // Other supported barcodes
-  .barcode({ type: 'Code39', data: 'ABC123' })
-  .barcode({ type: 'EAN13', data: '1234567890123' })
-  .barcode({ type: 'DataMatrix', data: 'Data' })
+  .barcode({ at: { x: 50, y: 200 }, type: Barcode.Code39, data: 'ABC123' })
+  .barcode({ at: { x: 50, y: 250 }, type: Barcode.EAN13, data: '1234567890123' })
+  .barcode({ at: { x: 50, y: 300 }, type: Barcode.DataMatrix, data: 'Data' });
 ```
 
 ### Graphics and Layout
@@ -166,14 +166,14 @@ label
     at: { x: 10, y: 10 },
     size: { w: 380, h: 580 },
     border: 2,
-    fill: 'B' // Black fill
+    fill: Fill.Black, // Black fill
   })
 
   // Lines (thin boxes)
   .box({
     at: { x: 50, y: 200 },
     size: { w: 300, h: 1 }, // Horizontal line
-    border: 1
+    border: 1,
   })
 
   // Multi-line address blocks
@@ -181,8 +181,8 @@ label
     at: { x: 50, y: 250 },
     lines: ['Ship To:', 'Jane Smith', '456 Oak Avenue', 'Somewhere, CA 90210'],
     lineHeight: 25,
-    size: 20
-  })
+    size: 20,
+  });
 ```
 
 ### Images
@@ -194,8 +194,8 @@ label.imageInline({
   rgba: imageData, // Uint8Array of RGBA pixels
   width: 100,
   height: 100,
-  threshold: 128 // Monochrome conversion threshold
-})
+  threshold: 128, // Monochrome conversion threshold
+});
 
 // Cached image (~DG + ^XG commands)
 label.image({
@@ -203,8 +203,8 @@ label.image({
   rgba: logoData,
   width: 50,
   height: 50,
-  name: 'R:LOGO.GRF' // Printer storage name
-})
+  name: 'R:LOGO.GRF', // Printer storage name
+});
 ```
 
 ### RFID and EPC
@@ -214,8 +214,8 @@ label.image({
 label.epc({
   at: { x: 50, y: 100 },
   epc: '3014257BF7194E4000001A85', // 96-bit EPC in hex
-  password: 'DEADBEEF' // Access password (optional)
-})
+  password: 'DEADBEEF', // Access password (optional)
+});
 
 // RFID field with specific memory bank
 label.rfid({
@@ -224,16 +224,16 @@ label.rfid({
   bank: 'USER', // EPC, TID, or USER
   offset: 0,
   length: 8,
-  password: '00000000'
-})
+  password: '00000000',
+});
 
 // Read RFID tag data
 label.rfidRead({
   at: { x: 50, y: 100 },
   bank: 'EPC',
   offset: 0,
-  length: 12
-})
+  length: 12,
+});
 ```
 
 ### Comments and Metadata
@@ -243,15 +243,15 @@ label.rfidRead({
 label
   .comment('This is a shipping label for Order #12345')
   .text({ at: { x: 50, y: 100 }, text: 'Hello World' })
-  .comment('End of content')
+  .comment('End of content');
 
 // Add structured metadata
 label.withMetadata({
   generator: '@schie/fluent-zpl',
   version: '1.0.0',
   orderNumber: 'ORD-12345',
-  customer: 'ACME Corp'
-})
+  customer: 'ACME Corp',
+});
 
 // Metadata is embedded as ZPL comments (^FX) for debugging
 ```
@@ -264,9 +264,9 @@ Control global ZPL settings that affect subsequent commands:
 label
   // Set global default font (^CF command)
   .setDefaultFont({
-    family: 'F',
+    family: FontFamily.F,
     height: 60,
-    width: 60
+    width: 60,
   })
   .text({ at: { x: 50, y: 50 }, text: 'Uses global font' })
 
@@ -274,35 +274,74 @@ label
   .setBarcodeDefaults({
     moduleWidth: 5,
     wideToNarrowRatio: 2,
-    height: 270
+    height: 270,
   })
   .barcode({
     at: { x: 50, y: 150 },
-    type: 'Code128',
-    data: '12345678' // Uses global height setting
+    type: Barcode.Code128,
+    data: '12345678', // Uses global height setting
   })
 
   // Field reverse effect (^FR command)
   .box({
     at: { x: 100, y: 200 },
     size: { w: 200, h: 100 },
-    reverse: true // Reverses colors within field
-  })
+    reverse: true, // Reverses colors within field
+  });
 ```
 
 These global settings generate the exact ZPL commands (`^CF`, `^BY`, `^FR`) found in complex label specifications, enabling precise control over printer behavior and optimized ZPL output.
 
+### ZPL Tagged Template
+
+Parse existing ZPL strings directly into Label instances using the `zpl` tagged template:
+
+```typescript
+import { zpl } from '@schie/fluent-zpl';
+
+// Parse ZPL with template interpolation
+const trackingNumber = '1Z999AA1234567890';
+const customerName = 'John Doe';
+
+const label = zpl`
+  ^XA
+  ^FX Shipping label from existing ZPL
+  ^CF0,60
+  ^FO50,50^FDShipping Label^FS
+  ^FO50,100^FD${customerName}^FS
+  ^BY5,2,270
+  ^FO50,200^BC^FD${trackingNumber}^FS
+  ^XZ
+`;
+
+// Continue with fluent API
+label
+  .comment('Added via fluent API')
+  .text({ at: { x: 50, y: 350 }, text: 'Processed by fluent-zpl' })
+  .toZPL();
+```
+
+Alternative syntax with explicit options:
+
+```typescript
+const label = zpl.withOptions({ dpi: 300, units: Units.Millimeter })`
+  ^XA
+  ^FO10,10^A0N,28,28^FDHigh Resolution^FS
+  ^XZ
+`;
+```
+
 ### Unit Conversion
 
 ```typescript
-import { mm, inch, toDots } from '@schie/fluent-zpl'
+import { mm, inch, toDots } from '@schie/fluent-zpl';
 
 // Convert units to dots
-const x = mm(25.4, 203) // 25.4mm at 203 DPI = 203 dots
-const y = inch(1, 203) // 1 inch at 203 DPI = 203 dots
+const x = mm(25.4, 203); // 25.4mm at 203 DPI = 203 dots
+const y = inch(1, 203); // 1 inch at 203 DPI = 203 dots
 
 // Generic conversion
-const pos = toDots(50, 203, 'mm') // 50mm to dots at 203 DPI
+const pos = toDots(50, 203, Units.Millimeter); // 50mm to dots at 203 DPI
 ```
 
 ## 🏷️ Real-World Examples
@@ -310,86 +349,120 @@ const pos = toDots(50, 203, 'mm') // 50mm to dots at 203 DPI
 ### Shipping Label
 
 ```typescript
-const shippingLabel = Label.create({ w: 4, h: 6, units: 'in', dpi: 203 })
+const shippingLabel = Label.create({ w: 4, h: 6, units: Units.Inch, dpi: 203 })
   .text({
     at: { x: 0.5, y: 0.5 },
     text: 'FEDEX GROUND',
-    font: { family: 'B', h: 28, w: 28 }
+    font: { family: FontFamily.B, h: 28, w: 28 },
   })
   .box({
     at: { x: 0.25, y: 0.25 },
     size: { w: 3.5, h: 5.5 },
-    border: 2
+    border: 2,
   })
   .addressBlock({
     at: { x: 0.5, y: 1.5 },
     lines: ['SHIP TO:', 'John Doe', '123 Main St', 'Anytown, NY 12345'],
-    lineHeight: 25
+    lineHeight: 25,
   })
   .barcode({
     at: { x: 0.5, y: 3.5 },
-    type: 'Code128',
+    type: Barcode.Code128,
     data: trackingNumber,
-    height: 80
-  })
+    height: 80,
+  });
 ```
 
 ### Product Label
 
 ```typescript
-const productLabel = Label.create({ w: 100, h: 75, units: 'mm', dpi: 300 })
+const productLabel = Label.create({ w: 100, h: 75, units: Units.Millimeter, dpi: 300 })
   .caption({
     at: { x: 5, y: 5 },
     text: productName,
-    size: 16
+    size: 16,
   })
   .text({
     at: { x: 5, y: 25 },
     text: `SKU: ${sku}`,
-    font: { family: 'A', h: 12, w: 12 }
+    font: { family: FontFamily.A, h: 12, w: 12 },
   })
   .qr({
     at: { x: 60, y: 25 },
     text: productUrl,
-    module: 2
+    module: 2,
   })
   .text({
     at: { x: 5, y: 60 },
     text: `$${price}`,
-    font: { family: 'B', h: 20, w: 20 }
-  })
+    font: { family: FontFamily.B, h: 20, w: 20 },
+  });
 ```
 
 ### RFID Asset Tag
 
 ```typescript
-const assetTag = Label.create({ w: 4, h: 2, units: 'in', dpi: 203 })
+const assetTag = Label.create({ w: 4, h: 2, units: Units.Inches, dpi: 203 })
   .text({
     at: { x: 0.25, y: 0.25 },
     text: 'ASSET TAG',
-    font: { family: 'B', h: 20, w: 20 }
+    font: { family: FontFamily.B, h: 20, w: 20 },
   })
   .text({
     at: { x: 0.25, y: 0.75 },
     text: `ID: ${assetId}`,
-    font: { family: 'A', h: 16, w: 16 }
+    font: { family: FontFamily.A, h: 16, w: 16 },
   })
   .barcode({
     at: { x: 2.5, y: 0.5 },
-    type: 'Code128',
+    type: Barcode.Code128,
     data: assetId,
-    height: 60
+    height: 60,
   })
   .epc({
     at: { x: 0.25, y: 1.5 },
     epc: epcData, // 96-bit EPC hex string
-    password: accessPassword
+    password: accessPassword,
   })
   .text({
     at: { x: 0.25, y: 1.25 },
     text: 'RFID ENABLED',
-    font: { family: 'A', h: 12, w: 12 }
+    font: { family: FontFamily.A, h: 12, w: 12 },
+  });
+```
+
+### Complex Shipping Label with Global Settings
+
+```typescript
+const complexLabel = Label.create({ w: 800, h: 1200, units: Units.Dots, dpi: 203 })
+  .comment('Top section with logo and company info')
+  .setDefaultFont({ family: FontFamily.F, height: 60 })
+
+  // Logo with field reverse effect
+  .box({ at: { x: 50, y: 50 }, size: { w: 100, h: 100 }, border: 100 })
+  .box({ at: { x: 75, y: 75 }, size: { w: 100, h: 100 }, border: 100, reverse: true })
+  .box({ at: { x: 93, y: 93 }, size: { w: 40, h: 40 }, border: 40 })
+
+  // Company name uses global font setting
+  .text({ at: { x: 220, y: 50 }, text: 'Intershipping, Inc.' })
+
+  .comment('Recipient address section')
+  .setDefaultFont({ family: FontFamily.A, height: 30 })
+  .text({ at: { x: 50, y: 300 }, text: 'John Doe' })
+  .text({ at: { x: 50, y: 340 }, text: '100 Main Street' })
+  .text({ at: { x: 50, y: 380 }, text: 'Springfield TN 39021' })
+
+  .comment('Barcode with global settings')
+  .setBarcodeDefaults({ moduleWidth: 5, wideToNarrowRatio: 2, height: 270 })
+  .barcode({
+    at: { x: 100, y: 550 },
+    type: Barcode.Code128,
+    data: '12345678',
+    // Height comes from global ^BY setting
   })
+
+  .setDefaultFont({ family: FontFamily.F, height: 190 })
+  .text({ at: { x: 470, y: 955 }, text: 'CA' });
 ```
 
 ### Complex Shipping Label with Global Settings
@@ -431,11 +504,11 @@ const complexLabel = Label.create({ w: 800, h: 1200, units: 'dot', dpi: 203 })
 This library includes comprehensive ZPL validation to ensure all generated output works with Zebra printers:
 
 ```typescript
-import { Label } from '@schie/fluent-zpl'
+import { Label } from '@schie/fluent-zpl';
 
-const label = Label.create({ w: 400, h: 600 }).text({ at: { x: 50, y: 100 }, text: 'Test' })
+const label = Label.create({ w: 400, h: 600 }).text({ at: { x: 50, y: 100 }, text: 'Test' });
 
-const zpl = label.toZPL()
+const zpl = label.toZPL();
 
 // All output is validated to ensure:
 // ✅ Proper ^XA...^XZ structure
@@ -482,6 +555,10 @@ const zpl = label.toZPL()
   - `.setDefaultFont(opts)` - Set global default font (^CF)
   - `.setBarcodeDefaults(opts)` - Set global barcode settings (^BY)
   - `.toZPL()` - Generate ZPL string
+
+- **`zpl`** - Tagged template for ZPL parsing with interpolation
+  - `zpl\`...\`` - Parse ZPL template literal
+  - `zpl.withOptions(opts)\`...\`` - Parse with label options
 
 ### Utilities
 
