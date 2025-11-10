@@ -1,7 +1,8 @@
 // import './App.css'
 import { Barcode, FontFamily, Justify, Label } from '@schie/fluent-zpl';
 import { Jimp } from 'jimp';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FC } from 'react';
+import epcImage from './epc.jpeg';
 import rfidImage from './rfid.png';
 
 import {
@@ -13,11 +14,11 @@ import {
   epc,
   itemDescription,
   retail,
-} from './_shared';
-import { TagCard } from './TagCard';
+} from '../_shared';
+import { TagCard, type TagCardProps } from './TagCard';
 
-const wInch = 2.874;
-const hInch = 0.669;
+const wInch = 3.0;
+const hInch = 1.0;
 
 // For now, let's create a simple version without the actual image
 const w = curryInch(wInch);
@@ -25,42 +26,42 @@ const h = curryInch(hInch);
 
 const label = Label.create({ w, h })
   .barcode({
-    at: { x: 20, y: 20 },
+    at: { x: 30, y: 30 },
     height: 50,
     type: Barcode.Code128,
     data: barcode,
   })
   .text({
-    at: { x: 20, y: Math.floor(h / 2) },
+    at: { x: 30, y: 120 },
     wrap: {
       width: Math.floor(w * 0.75),
-      lines: 2,
+      lines: 3,
       justify: Justify.Left,
     },
-    font: { family: FontFamily.A, h: curryMm(1.5), w: curryMm(1.4) },
+    font: { family: FontFamily.A, h: curryMm(2), w: curryMm(1.5) },
     text: itemDescription,
     // text: 'Sample Product Name .........X.........X.........X',
   })
   .text({
-    at: { x: 20, y: 160 },
-    font: { family: FontFamily.A, h: curryMm(1.2), w: curryMm(1.1) },
+    at: { x: 30, y: 200 },
+    font: { family: FontFamily.A, h: curryMm(1.5), w: curryMm(1.5) },
     text: dimension1,
-    wrap: { width: Math.floor(w / 2 - 20), lines: 1 },
+    wrap: { width: 180 },
   })
   .text({
-    at: { x: 20, y: 180 },
-    font: { family: FontFamily.A, h: curryMm(1.2), w: curryMm(1.1) },
+    at: { x: 30, y: 230 },
+    font: { family: FontFamily.A, h: curryMm(1.5), w: curryMm(1.5) },
     text: dimension2,
-    wrap: { width: Math.floor(w / 2 - 20), lines: 1 },
+    wrap: { width: 180 },
   })
   .text({
-    at: { x: Math.floor(w / 2), y: 170 },
+    at: { x: Math.floor(w / 2), y: 200 },
     font: { family: FontFamily.A, h: curryMm(1.5), w: curryMm(1.5) },
     text: retail,
-    wrap: { width: Math.floor(w / 2 - 20), justify: Justify.Right },
+    wrap: { width: 200 },
   })
   .text({
-    at: { x: 20, y: 205 },
+    at: { x: 30, y: h - 30 },
     font: { family: FontFamily.A, h: curryMm(1.2), w: curryMm(1) },
     text: epc,
   })
@@ -68,11 +69,13 @@ const label = Label.create({ w, h })
     epc,
   });
 
-export function Label2874x0669() {
+type Props = Pick<TagCardProps, 'onDetailClick'>;
+
+export const Label300x100: FC<Props> = (props) => {
   const [leBelle, setLeBelle] = useState<string>(label.toZPL());
 
   useEffect(() => {
-    Promise.all([Jimp.read(rfidImage)]).then((images) => {
+    Promise.all([Jimp.read(epcImage), Jimp.read(rfidImage)]).then((images) => {
       let leiBull = label;
       images.forEach((img, index) => {
         const { width: originalWidth, height: originalHeight } = img.bitmap;
@@ -84,7 +87,7 @@ export function Label2874x0669() {
         }
         img.resize({ w: 100, h: 100 });
         leiBull = leiBull.imageInline({
-          at: { x: w - img.bitmap.width - 40, y: 40 + index * 100 },
+          at: { x: w - img.bitmap.width - 40, y: 30 + index * 100 },
           rgba: img.bitmap.data,
           width: img.bitmap.width,
           height: img.bitmap.height,
@@ -100,11 +103,12 @@ export function Label2874x0669() {
 
   return (
     <TagCard
-      title={`${wInch} x ${hInch} - Cigar`}
-      description="A Cigar band style label with barcode, description, dimensions, retail price, and EPC."
+      title={`${wInch}" x ${hInch}" Label`}
+      description="A compact label ideal for small products, offering essential information"
       zpl={leBelle}
       widthInInches={wInch}
       heightInInches={hInch}
+      {...props}
     />
   );
-}
+};

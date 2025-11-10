@@ -1,7 +1,7 @@
 // import './App.css'
 import { Barcode, FontFamily, Justify, Label } from '@schie/fluent-zpl';
 import { Jimp } from 'jimp';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import epcImage from './epc.jpeg';
 import rfidImage from './rfid.png';
 
@@ -14,8 +14,8 @@ import {
   epc,
   itemDescription,
   retail,
-} from './_shared';
-import { TagCard } from './TagCard';
+} from '../_shared';
+import { TagCard, type TagCardProps } from './TagCard';
 
 const wInch = 2.125;
 const hInch = 1.0;
@@ -68,7 +68,9 @@ const label = Label.create({ w, h })
     epc,
   });
 
-export function Label2125x100() {
+type Props = Pick<TagCardProps, 'onDetailClick'>;
+
+export const Label2125x100: FC<Props> = (props) => {
   const [leBelle, setLeBelle] = useState<string>(label.toZPL());
 
   useEffect(() => {
@@ -100,11 +102,12 @@ export function Label2125x100() {
 
   return (
     <TagCard
-      title={`${wInch} x ${hInch}`}
+      title={`${wInch}" x ${hInch}" Label`}
       description="A standard product label with barcode, description, dimensions, retail price, and EPC."
       zpl={leBelle}
       widthInInches={wInch}
       heightInInches={hInch}
+      {...props}
     />
   );
-}
+};

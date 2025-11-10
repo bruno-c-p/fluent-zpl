@@ -1,12 +1,13 @@
 // import './App.css'
-import { useEffect, useMemo, useRef, useState, type FC } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
 
-interface TagCardProps {
+export interface TagCardProps {
   title: string;
   description?: string;
   zpl: string;
   widthInInches: number;
   heightInInches: number;
+  onDetailClick?: (title: string, zpl: string) => void;
 }
 
 export const TagCard: FC<TagCardProps> = ({
@@ -15,6 +16,7 @@ export const TagCard: FC<TagCardProps> = ({
   zpl,
   widthInInches,
   heightInInches,
+  onDetailClick,
 }) => {
   const workerRef = useRef<Worker | null>(null);
   const [b64, setB64] = useState<string>('');
@@ -23,7 +25,7 @@ export const TagCard: FC<TagCardProps> = ({
   const reqIdRef = useRef<number>(0);
 
   useEffect(() => {
-    const worker = new Worker(new URL('./zpl-web-worker.ts', import.meta.url), { type: 'module' });
+    const worker = new Worker(new URL('../zpl-web-worker.ts', import.meta.url), { type: 'module' });
     workerRef.current = worker;
 
     const onMessage = (
@@ -65,39 +67,47 @@ export const TagCard: FC<TagCardProps> = ({
     w.postMessage({
       id,
       zpl,
-      wmm: widthInInches * 25.4,
-      hmm: heightInInches * 25.4,
+      wmm: Math.floor(widthInInches * 25.4),
+      hmm: Math.floor(heightInInches * 25.4),
       dpmm: 12,
     });
   }, [zpl, widthInInches, heightInInches]);
 
   const url = useMemo(() => `data:image/png;base64,${b64}`, [b64]);
 
-  const formattedZPL = useMemo(
-    () =>
-      zpl
-        .split('^')
-        .filter((x) => !!x.trim())
-        .map((x) => `^${x}`)
-        .join('\n'),
-    [zpl],
+  const [widthInPixels, heightInPixels] = useMemo(
+    () => [widthInInches * 96, heightInInches * 96],
+    [widthInInches, heightInInches],
+  );
+
+  const onDetailClickCallback = useCallback(
+    () => onDetailClick?.(title, zpl),
+    [onDetailClick, title, zpl],
   );
 
   return (
-    <div className="card shadow-sm">
-      <figure>
+    <div className="card shadow-lg">
+      <figure className="p-4 bg-primary/20">
         {error ? (
           <span>ERROR | Internal: {error}</span>
         ) : (
-          <img src={url} className="rounded-xl" alt="ZPL" />
+          <img
+            src={url}
+            className="rounded-lg shadow-xl"
+            alt="ZPL"
+            height={heightInPixels}
+            width={widthInPixels}
+          />
         )}
       </figure>
       <div className="card-body">
         <h2 className="card-title">{title}</h2>
         <p>{description}</p>
-        <details>
-          <code>{formattedZPL}</code>
-        </details>
+        <div className="card-actions justify-end">
+          <button className="btn btn-primary btn-sm" onClick={onDetailClickCallback}>
+            Details
+          </button>
+        </div>
       </div>
     </div>
   );
