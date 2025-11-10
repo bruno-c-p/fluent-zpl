@@ -2,25 +2,30 @@
 // @schie/fluent-zpl – Label class (fluent, immutable)
 
 import type {
+  AddressBlockOpts,
   BarcodeOpts,
   BoxOpts,
+  CaptionOpts,
   DPI,
+  EPCOpts,
+  GS1_128Opts,
   LabelOptions,
-  Orientation,
+  QRCodeOpts,
   RFIDOpts,
+  RFIDReadOpts,
   TextOpts,
   Token,
-  Units
-} from '../_types.js'
-import { toDots } from '../_unit-helpers.js'
+} from '../_types.js';
+import { Barcode, Fill, FontFamily, Justify, Orientation, RFIDBank, Units } from '../_types.js';
+import { toDots } from '../_unit-helpers.js';
 import {
   buildImageCachedTokens,
   buildImageInlineTokens,
   ImageCachedOpts,
-  ImageInlineOpts
-} from '../image/api.js'
-import { emit } from './emit.js'
-import { findLastXZ, tokenizeZPL } from './parse.js'
+  ImageInlineOpts,
+} from '../image/api.js';
+import { emit } from './emit.js';
+import { findLastXZ, tokenizeZPL } from './parse.js';
 
 /**
  * ZPL Label class
@@ -32,13 +37,13 @@ import { findLastXZ, tokenizeZPL } from './parse.js'
  */
 export class Label {
   /** Lossless token stream is the single source of truth for this Label */
-  private readonly tokens: Token[]
+  private readonly tokens: Token[];
   /** Public so advanced users (and your own components) can read cfg if needed */
-  public readonly cfg: { dpi: DPI; units: Units }
+  public readonly cfg: { dpi: DPI; units: Units };
 
   private constructor(tokens: Token[], cfg: { dpi: DPI; units: Units }) {
-    this.tokens = tokens
-    this.cfg = cfg
+    this.tokens = tokens;
+    this.cfg = cfg;
   }
 
   // ---------------------------------------------------------------------------
@@ -47,29 +52,29 @@ export class Label {
 
   /** Create a fresh label (^XA … ^XZ) with basic page setup */
   static create(opts: LabelOptions): Label {
-    const dpi: DPI = (opts.dpi ?? 203) as DPI
-    const units: Units = opts.units ?? 'dot'
+    const dpi: DPI = (opts.dpi ?? 203) as DPI;
+    const units: Units = opts.units ?? Units.Dot;
 
-    const head: string[] = ['^XA']
-    if (opts.orientation) head.push(`^PO${opts.orientation}`)
+    const head: string[] = ['^XA'];
+    if (opts.orientation) head.push(`^PO${opts.orientation}`);
     if (opts.origin)
-      head.push(`^LH${toDots(opts.origin.x, dpi, units)},${toDots(opts.origin.y, dpi, units)}`)
-    head.push(`^LL${toDots(opts.h, dpi, units)}`)
+      head.push(`^LH${toDots(opts.origin.x, dpi, units)},${toDots(opts.origin.y, dpi, units)}`);
+    head.push(`^LL${toDots(opts.h, dpi, units)}`);
 
     // If you want to store width explicitly later, you can add ^PW here as well.
 
-    const tokens = tokenizeZPL(head.join('') + '^XZ')
-    return new Label(tokens, { dpi, units })
+    const tokens = tokenizeZPL(head.join('') + '^XZ');
+    return new Label(tokens, { dpi, units });
   }
 
   /** Parse an existing ZPL string/bytes into a fluent Label instance */
-  static parse(zpl: string | Uint8Array, dpi: DPI = 203 as DPI, units: Units = 'dot'): Label {
-    const tokens = tokenizeZPL(zpl)
-    return new Label(tokens, { dpi, units })
+  static parse(zpl: string | Uint8Array, dpi: DPI = 203 as DPI, units: Units = Units.Dot): Label {
+    const tokens = tokenizeZPL(zpl);
+    return new Label(tokens, { dpi, units });
   }
 
   /** Back-compat alias if you like the old name */
-  static fromZPL = Label.parse
+  static fromZPL = Label.parse;
 
   // ---------------------------------------------------------------------------
   // Core building blocks (primitive fluent methods)
@@ -77,85 +82,99 @@ export class Label {
 
   /** Add a text field */
   text(o: TextOpts): Label {
-    const { dpi, units } = this.cfg
+    const { dpi, units } = this.cfg;
 
-    const parts: string[] = []
-    parts.push(`^FO${toDots(o.at.x, dpi, units)},${toDots(o.at.y, dpi, units)}`)
+    const parts: string[] = [];
+    parts.push(`^FO${toDots(o.at.x, dpi, units)},${toDots(o.at.y, dpi, units)}`);
 
-    const fam = o.font?.family ?? 'A'
-    const rot: Orientation = o.rotate ?? 'N'
+    const fam = o.font?.family ?? FontFamily.A;
+    const rot: Orientation = o.rotate ?? Orientation.Normal;
     // Use reasonable defaults for font size if not specified (ZPL requires these parameters)
-    const h = o.font?.h != null ? clamp1(o.font.h) : 28
-    const w = o.font?.w != null ? clamp1(o.font.w) : 28
+    const h = o.font?.h != null ? clamp1(o.font.h) : 28;
+    const w = o.font?.w != null ? clamp1(o.font.w) : 28;
 
-    parts.push(`^A${fam}${rot}${h},${w}`)
+    parts.push(`^A${fam}${rot},${h},${w}`);
 
     if (o.wrap) {
-      const width = toDots(o.wrap.width, dpi, units)
-      const lines = o.wrap.lines ?? 10
-      const spacing = clamp0(o.wrap.spacing ?? 0)
-      const just = o.wrap.justify ?? 'L'
-      parts.push(`^FB${width},${lines},${spacing},${just},0`)
+      const width = toDots(o.wrap.width, dpi, units);
+      const lines = o.wrap.lines ?? 10;
+      const spacing = clamp0(o.wrap.spacing ?? 0);
+      const just = o.wrap.justify ?? 'L';
+      parts.push(`^FB${width},${lines},${spacing},${just},0`);
     }
 
-    parts.push(`^FD${Label.escFD(o.text)}^FS`)
+    parts.push(`^FD${Label.escFD(o.text)}^FS`);
 
-    return this._insertBeforeXZ(tokenizeZPL(parts.join('')))
+    return this._insertBeforeXZ(tokenizeZPL(parts.join('')));
   }
 
   /** Add a barcode field */
   barcode(o: BarcodeOpts): Label {
-    const { dpi, units } = this.cfg
-    const x = toDots(o.at.x, dpi, units)
-    const y = toDots(o.at.y, dpi, units)
-    const m = o.module ?? 2
-    const h = o.height ?? 100
-    const r = o.rotate ?? 'N'
+    const { dpi, units } = this.cfg;
+    const x = toDots(o.at.x, dpi, units);
+    const y = toDots(o.at.y, dpi, units);
+    const m = o.module ?? 2;
+    const ratio = o.ratio ?? 3; // Default 3:1 ratio for better scan reliability
+    const h = o.height ?? 100;
+    const r = o.rotate ?? 'N';
 
-    let spec = ''
+    // Add ^BY command for module width and ratio control
+    const byCmd = `^BY${m},${ratio},${h}`;
+
+    let spec = '';
     switch (o.type) {
       case 'Code128':
-        spec = `^BC${r},${h},Y,N,N`
-        break
+        spec = `^BC${r},${h},Y,N,N`;
+        break;
       case 'Code39':
-        spec = `^B3${r},${m},Y,N`
-        break
+        spec = `^B3${r},${m},Y,N`;
+        break;
       case 'EAN13':
-        spec = `^BE${r},${h},Y`
-        break
+        spec = `^BE${r},${h},Y`;
+        break;
       case 'UPCA':
-        spec = `^B8${r},${h},Y,N,N`
-        break
+        spec = `^B8${r},${h},Y,N,N`;
+        break;
       case 'ITF':
-        spec = `^BI${r},${h},Y,N`
-        break
+        spec = `^BI${r},${h},Y,N`;
+        break;
       case 'PDF417':
-        spec = `^B7${r},${m},${m},3,N,N,N`
-        break
+        spec = `^B7${r},${m},${m},3,N,N,N`;
+        break;
       case 'QRCode':
-        spec = `^BQ${r},2,${m}`
-        break
+        // ^BQ orientation,model,magnification,errorCorrection,mask
+        // orientation: N only (backward compatibility)
+        // model: 1 (original) or 2 (enhanced, default)
+        // magnification: 1-100 (default depends on DPI)
+        // errorCorrection: H/Q/M/L (default Q)
+        // mask: 0-7 (default 7)
+        const model = o.qrModel ?? 2; // Default to enhanced model 2
+        const errorCorrection = o.qrErrorCorrection ?? 'Q'; // Default to high reliability
+        const mask = o.qrMask ?? 7; // Default mask pattern
+        spec = `^BQN,${model},${m},${errorCorrection},${mask}`;
+        break;
       case 'DataMatrix':
-        spec = `^BX${r},${m},200`
-        break
+        spec = `^BX${r},${m},200`;
+        break;
     }
 
-    const chunk = `^FO${x},${y}${spec}^FD${Label.escFD(o.data)}^FS`
-    return this._insertBeforeXZ(tokenizeZPL(chunk))
+    const chunk = `^FO${x},${y}${byCmd}${spec}^FD${Label.escFD(o.data)}^FS`;
+    return this._insertBeforeXZ(tokenizeZPL(chunk));
   }
 
   /** Draw a box/line */
   box(o: BoxOpts): Label {
-    const { dpi, units } = this.cfg
-    const x = toDots(o.at.x, dpi, units)
-    const y = toDots(o.at.y, dpi, units)
-    const w = toDots(o.size.w, dpi, units)
-    const h = toDots(o.size.h, dpi, units)
-    const t = clamp1(o.border ?? 1)
-    const fill = o.fill ?? 'B'
-    const reverse = o.reverse ? '^FR' : ''
-    const chunk = `^FO${x},${y}${reverse}^GB${w},${h},${t},${fill},0^FS`
-    return this._insertBeforeXZ(tokenizeZPL(chunk))
+    const { dpi, units } = this.cfg;
+    const x = toDots(o.at.x, dpi, units);
+    const y = toDots(o.at.y, dpi, units);
+    const w = toDots(o.size.w, dpi, units);
+    const h = toDots(o.size.h, dpi, units);
+    const t = clamp1(o.border ?? 1);
+    const fill = o.fill ?? Fill.Black;
+    const radius = Math.max(0, Math.min(8, Math.round(o.cornerRadius ?? 0))); // ZPL supports 0-8
+    const reverse = o.reverse ? '^FR' : '';
+    const chunk = `^FO${x},${y}${reverse}^GB${w},${h},${t},${fill},${radius}^FS`;
+    return this._insertBeforeXZ(tokenizeZPL(chunk));
   }
 
   // ---------------------------------------------------------------------------
@@ -163,175 +182,134 @@ export class Label {
   // ---------------------------------------------------------------------------
 
   /** Caption text with symmetric h/w and optional wrap width */
-  caption(o: {
-    at: { x: number; y: number }
-    text: string
-    size?: number // dots
-    family?: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | '0'
-    rotate?: Orientation
-    wrapWidth?: number // in current units
-  }): Label {
-    const { dpi, units } = this.cfg
-    const size = clamp1(o.size ?? 24)
+  caption(o: CaptionOpts): Label {
+    const { dpi, units } = this.cfg;
+    const size = clamp1(o.size ?? 24);
     const wrap =
       o.wrapWidth != null
-        ? { width: toDots(o.wrapWidth, dpi, units), lines: 10, spacing: 0, justify: 'L' as const }
-        : undefined
+        ? { width: toDots(o.wrapWidth, dpi, units), lines: 10, spacing: 0, justify: Justify.Left }
+        : undefined;
 
     return this.text({
       at: o.at,
       text: o.text,
-      rotate: o.rotate ?? 'N',
-      font: { family: o.family ?? 'A', h: size, w: size },
-      wrap
-    })
+      rotate: o.rotate ?? Orientation.Normal,
+      font: { family: o.family ?? FontFamily.A, h: size, w: size },
+      wrap,
+    });
   }
 
   /** Convenience QR method using ^BQ under the hood */
-  qr(o: {
-    at: { x: number; y: number }
-    text: string
-    module?: number
-    rotate?: Orientation
-  }): Label {
+  qr(o: QRCodeOpts): Label {
+    // Handle backward compatibility: magnification overrides module
+    const magnification = o.magnification ?? o.module ?? 3;
+
     return this.barcode({
       at: o.at,
-      type: 'QRCode',
+      type: Barcode.QRCode,
       data: o.text,
-      module: o.module ?? 3,
-      rotate: o.rotate ?? 'N'
-    })
+      module: magnification,
+      rotate: o.rotate ?? Orientation.Normal,
+      qrErrorCorrection: o.errorCorrection,
+      qrMask: o.mask,
+      qrModel: o.model,
+    });
   }
 
   /** Pragmatic GS1-128 helper rendered via Code128 */
-  gs1_128(o: {
-    at: { x: number; y: number }
-    ai: Record<string, string | number>
-    height?: number
-    rotate?: Orientation
-  }): Label {
-    const data = Label.gs1Data(o.ai)
+  gs1_128(o: GS1_128Opts): Label {
+    const data = Label.gs1Data(o.ai);
     return this.barcode({
       at: o.at,
-      type: 'Code128',
+      type: Barcode.Code128,
       data,
       height: o.height ?? 100,
-      rotate: o.rotate ?? 'N'
-    })
+      rotate: o.rotate ?? Orientation.Normal,
+    });
   }
 
   /** Multiline text block for addresses/blocks */
-  addressBlock(o: {
-    at: { x: number; y: number }
-    lines: Array<string | undefined | null>
-    lineHeight?: number // dots between lines
-    size?: number // font size in dots
-    family?: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | '0'
-    rotate?: Orientation
-  }): Label {
-    const lh = clamp1(o.lineHeight ?? 24)
-    const size = clamp1(o.size ?? 24)
-    const fam = o.family ?? 'A'
-    let y = o.at.y
-    let acc: Label = this
+  addressBlock(o: AddressBlockOpts): Label {
+    const lh = clamp1(o.lineHeight ?? 24);
+    const size = clamp1(o.size ?? 24);
+    const fam = o.family ?? FontFamily.A;
+    let y = o.at.y;
+    let acc: Label = this;
 
     for (const line of o.lines) {
       if (!line) {
-        y += lh
-        continue
+        y += lh;
+        continue;
       }
       acc = acc.caption({
         at: { x: o.at.x, y },
         text: line,
         size,
         family: fam,
-        rotate: o.rotate ?? 'N'
-      })
-      y += lh
+        rotate: o.rotate ?? Orientation.Normal,
+      });
+      y += lh;
     }
-    return acc
+    return acc;
   }
 
   /** Inline bitmap (^GF) — fully self-contained */
   imageInline(o: ImageInlineOpts): Label {
-    const toks = buildImageInlineTokens(this.cfg, o)
-    return this._insertBeforeXZ(toks)
+    const toks = buildImageInlineTokens(this.cfg, o);
+    return this._insertBeforeXZ(toks);
   }
 
   /** RFID field for EPC encoding */
   rfid(o: RFIDOpts): Label {
-    const { dpi, units } = this.cfg
-    const x = toDots(o.at.x, dpi, units)
-    const y = toDots(o.at.y, dpi, units)
-    const bank = o.bank ?? 'EPC'
-    const offset = o.offset ?? 0
-    const length = o.length ?? o.epc.length / 2 // hex pairs to words
+    // Your working pattern: ^RFW,H^FD{epcValue}^FS
+    // Let's match this exactly but allow for different banks
+    const bank = o.bank ?? RFIDBank.EPC;
+    const offset = o.offset ?? 0;
+    const length = o.length ?? o.epc.length / 2;
 
-    // ^RF command: ^RFw,h,protocol,read,password
-    // Basic RFID field positioning and EPC write
-    const rfCmd = `^RF${x},${y},0,1,${o.password ?? '00000000'}`
-
-    // EPC write command based on memory bank
-    let writeCmd = ''
+    let writeCmd = '';
     switch (bank) {
-      case 'EPC':
-        writeCmd = `^RFW,E,${offset},${length},${o.epc}`
-        break
-      case 'USER':
-        writeCmd = `^RFW,U,${offset},${length},${o.epc}`
-        break
-      case 'TID':
-        // TID is typically read-only, but include for completeness
-        writeCmd = `^RFW,T,${offset},${length},${o.epc}`
-        break
+      case RFIDBank.EPC:
+        writeCmd = `^RFW,H`; // Matches your working ZPL exactly
+        break;
+      case RFIDBank.USER:
+        writeCmd = `^RFW,U,${offset},${length}`;
+        break;
+      case RFIDBank.TID:
+        writeCmd = `^RFW,T,${offset},${length}`;
+        break;
     }
 
-    const chunk = `${rfCmd}^FD${writeCmd}^FS`
-    return this._insertBeforeXZ(tokenizeZPL(chunk))
+    const chunk = `${writeCmd}^FD${o.epc}^FS`;
+    return this._insertBeforeXZ(tokenizeZPL(chunk));
   }
 
   /** Read RFID tag data */
-  rfidRead(o: {
-    at: { x: number; y: number }
-    bank?: 'EPC' | 'TID' | 'USER'
-    offset?: number
-    length?: number
-    password?: string
-  }): Label {
-    const { dpi, units } = this.cfg
-    const x = toDots(o.at.x, dpi, units)
-    const y = toDots(o.at.y, dpi, units)
-    const bank = o.bank ?? 'EPC'
-    const offset = o.offset ?? 0
-    const length = o.length ?? 8
+  rfidRead(o: RFIDReadOpts): Label {
+    const bank = o.bank ?? RFIDBank.EPC;
+    const offset = o.offset ?? 0;
+    const length = o.length ?? 8;
 
-    const rfCmd = `^RF${x},${y},0,0,${o.password ?? '00000000'}`
-    const readCmd = `^RFR,${bank.charAt(0)},${offset},${length}`
-
-    const chunk = `${rfCmd}^FD${readCmd}^FS`
-    return this._insertBeforeXZ(tokenizeZPL(chunk))
+    const readCmd = `^RFR,${bank.charAt(0)},${offset},${length}`;
+    const chunk = `${readCmd}^FD^FS`;
+    return this._insertBeforeXZ(tokenizeZPL(chunk));
   }
 
   /** EPC encoding convenience method */
-  epc(o: {
-    at: { x: number; y: number }
-    epc: string
-    position?: number
-    password?: string
-  }): Label {
+  epc(o: EPCOpts): Label {
     return this.rfid({
-      at: o.at,
       epc: o.epc,
+      at: o.at,
       position: o.position,
       password: o.password,
-      bank: 'EPC'
-    })
+      bank: RFIDBank.EPC,
+    });
   }
 
   /** Cached asset (~DG + ^XG). Consider pairing with a registry for dedupe. */
   image(o: ImageCachedOpts): Label {
-    const toks = buildImageCachedTokens(this.cfg, o)
-    return this._insertBeforeXZ(toks)
+    const toks = buildImageCachedTokens(this.cfg, o);
+    return this._insertBeforeXZ(toks);
   }
 
   // ---------------------------------------------------------------------------
@@ -340,7 +318,7 @@ export class Label {
 
   /** Emit the final ZPL string. Untouched tokens re-emit byte-identical. */
   toZPL(): string {
-    return emit(this.tokens)
+    return emit(this.tokens);
   }
 
   // ---------------------------------------------------------------------------
@@ -349,20 +327,20 @@ export class Label {
 
   /** Insert a token chunk immediately before the last ^XZ in the stream */
   private _insertBeforeXZ(newTokens: Token[]): Label {
-    const idx = findLastXZ(this.tokens)
-    const next = [...this.tokens]
-    next.splice(idx, 0, ...newTokens)
-    return new Label(next, this.cfg)
+    const idx = findLastXZ(this.tokens);
+    const next = [...this.tokens];
+    next.splice(idx, 0, ...newTokens);
+    return new Label(next, this.cfg);
   }
 
   /** Escape carets inside ^FD payloads per ZPL rules */
   private static escFD(s: string): string {
-    return String(s).replace(/\^/g, '^^')
+    return String(s).replace(/\^/g, '^^');
   }
 
   /** Minimal GS1 helper: inserts GS between variable-length AIs */
   private static gs1Data(aiMap: Record<string, string | number>): string {
-    const GS = String.fromCharCode(29)
+    const GS = String.fromCharCode(29);
     const variableLenAIs = new Set([
       '10',
       '21',
@@ -387,76 +365,72 @@ export class Label {
       '420',
       '421',
       '422',
-      '423'
-    ])
+      '423',
+    ]);
 
-    const pairs = Object.entries(aiMap)
-    let out = ''
+    const pairs = Object.entries(aiMap);
+    let out = '';
     for (let i = 0; i < pairs.length; i++) {
-      const [ai, valueRaw] = pairs[i]
-      const value = String(valueRaw)
+      const [ai, valueRaw] = pairs[i];
+      const value = String(valueRaw);
       // HRI-friendly composition. ZPL will encode FNC1 with GS char inside ^FD.
-      out += `(${ai})${value}`
-      if (i < pairs.length - 1 && variableLenAIs.has(ai)) out += GS
+      out += `(${ai})${value}`;
+      if (i < pairs.length - 1 && variableLenAIs.has(ai)) out += GS;
     }
-    return out
+    return out;
   }
 
   /** Add a ZPL comment (^FX) - useful for debugging and documentation */
   comment(text: string): Label {
-    const newTokens = [...this.tokens]
-    const insertIndex = findLastXZ(newTokens)
+    const newTokens = [...this.tokens];
+    const insertIndex = findLastXZ(newTokens);
 
     newTokens.splice(insertIndex, 0, {
       k: 'Cmd',
       mark: '^',
       name: 'FX',
-      params: ` ${text}`
-    })
+      params: ` ${text}`,
+    });
 
-    return new Label(newTokens, this.cfg)
+    return new Label(newTokens, this.cfg);
   }
 
   /** Add metadata as ZPL comments (^FX) for debugging and traceability */
   withMetadata(meta: Record<string, string | number>): Label {
-    let result: Label = this
+    let result: Label = this;
 
     Object.entries(meta).forEach(([key, value]) => {
-      result = result.comment(`${key}: ${value}`)
-    })
+      result = result.comment(`${key}: ${value}`);
+    });
 
-    return result
+    return result;
   }
 
   /** Set global default font (^CF) - affects all subsequent text fields that don't specify a font */
-  setDefaultFont(opts: {
-    family?: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | '0'
-    height?: number
-    width?: number
-  }): Label {
-    const family = opts.family ?? '0'
-    const height = clamp1(opts.height ?? 28)
-    const width = opts.width != null ? clamp1(opts.width) : height
+  setDefaultFont(opts: { family?: FontFamily; height?: number; width?: number }): Label {
+    const family = opts.family ?? FontFamily.Zero;
+    const height = clamp1(opts.height ?? 28);
+    const width = opts.width != null ? clamp1(opts.width) : height;
 
-    const chunk = `^CF${family},${height},${width}`
-    return this._insertBeforeXZ(tokenizeZPL(chunk))
+    const chunk = `^CF${family},${height},${width}`;
+    return this._insertBeforeXZ(tokenizeZPL(chunk));
   }
 
   /** Set global barcode module settings (^BY) - affects all subsequent barcodes */
   setBarcodeDefaults(opts: {
-    moduleWidth?: number
-    wideToNarrowRatio?: number
-    height?: number
+    moduleWidth?: number;
+    wideToNarrowRatio?: number;
+    height?: number;
   }): Label {
-    const moduleWidth = clamp1(opts.moduleWidth ?? 2)
-    const ratio = clamp1(opts.wideToNarrowRatio ?? 3)
-    const height = opts.height != null ? clamp1(opts.height) : ''
+    const moduleWidth = clamp1(opts.moduleWidth ?? 2);
+    const ratio = clamp1(opts.wideToNarrowRatio ?? 3);
+    const height = opts.height != null ? clamp1(opts.height) : '';
 
-    const chunk = `^BY${moduleWidth},${ratio}${height ? ',' + height : ''}`
-    return this._insertBeforeXZ(tokenizeZPL(chunk))
+    const chunk = `^BY${moduleWidth},${ratio}${height ? ',' + height : ''}`;
+    return this._insertBeforeXZ(tokenizeZPL(chunk));
   }
 }
 
 /* local helpers */
-const clamp1 = (n: number) => Math.max(1, Math.round(n))
-const clamp0 = (n: number) => Math.max(0, Math.round(n))
+const clamp1 = (n: number) => Math.max(1, Math.round(n));
+const clamp0 = (n: number) => Math.max(0, Math.round(n));

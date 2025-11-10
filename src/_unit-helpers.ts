@@ -1,7 +1,8 @@
 // src/_unit-helpers.ts
 // unit helpers for @schie/fluent-zpl
 
-import { DPI, Units } from './_types.js'
+import type { DPI } from './_types.js'
+import { Units } from './_types.js'
 
 /* =====================================
  *  Unit Helpers
@@ -37,12 +38,15 @@ export const inch = (n: number, dpi: DPI = 203) => Math.round(n * dpi)
  * @param units The units of the input value.
  * @returns The value in dots.
  */
-export const toDots = (n: number, dpi: DPI, units: Units): number => {
+export const toDots = (n: number, dpi: DPI, units: Units | 'dot' | 'mm' | 'in'): number => {
   switch (units) {
+    case Units.Dot:
     case 'dot':
       return dot(n)
+    case Units.Millimeter:
     case 'mm':
       return mm(n, dpi)
+    case Units.Inch:
     case 'in':
       return inch(n, dpi)
     default:

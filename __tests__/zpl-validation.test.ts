@@ -88,7 +88,7 @@ describe('ZPL Validation', () => {
       validateFieldOrigins(zpl)
 
       expect(zpl).toContain('^FO50,100')
-      expect(zpl).toContain('^AAN28,28')
+      expect(zpl).toContain('^AAN,28,28')
       expect(zpl).toContain('^FDHello World^FS')
     })
 
@@ -105,7 +105,7 @@ describe('ZPL Validation', () => {
         const zpl = label.toZPL()
 
         validateBasicZPLStructure(zpl)
-        expect(zpl).toContain(`^AA${rotation}20,20`)
+        expect(zpl).toContain(`^AA${rotation},20,20`)
       })
     })
 

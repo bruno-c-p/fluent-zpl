@@ -3,7 +3,19 @@
 import type { Token } from '../src/_types.js'
 import { emit } from '../src/core/emit.js'
 import { tokenizeZPL } from '../src/core/parse.js'
-import { Label, dot, inch, mm, toDots } from '../src/index.js'
+import {
+  Barcode,
+  Fill,
+  FontFamily,
+  Justify,
+  Label,
+  Orientation,
+  Units,
+  dot,
+  inch,
+  mm,
+  toDots
+} from '../src/index.js'
 
 describe('Label Factory Methods', () => {
   test('Label.create() should create basic label with defaults', () => {
@@ -14,7 +26,7 @@ describe('Label Factory Methods', () => {
     expect(zpl).toContain('^LL600')
     expect(zpl).toContain('^XZ')
     expect(label.cfg.dpi).toBe(203)
-    expect(label.cfg.units).toBe('dot')
+    expect(label.cfg.units).toBe(Units.Dot)
   })
 
   test('Label.create() should handle custom DPI and units', () => {
@@ -22,12 +34,12 @@ describe('Label Factory Methods', () => {
       w: 100,
       h: 150,
       dpi: 300,
-      units: 'mm'
+      units: Units.Millimeter
     })
     const zpl = label.toZPL()
 
     expect(label.cfg.dpi).toBe(300)
-    expect(label.cfg.units).toBe('mm')
+    expect(label.cfg.units).toBe(Units.Millimeter)
     expect(zpl).toContain('^LL177') // 150mm at 300 DPI ≈ 177 dots
   })
 
@@ -35,7 +47,7 @@ describe('Label Factory Methods', () => {
     const label = Label.create({
       w: 400,
       h: 600,
-      orientation: 'R',
+      orientation: Orientation.Rotated90,
       origin: { x: 10, y: 20 }
     })
     const zpl = label.toZPL()
@@ -54,10 +66,10 @@ describe('Label Factory Methods', () => {
 
   test('Label.parse() should handle custom DPI and units', () => {
     const zplInput = '^XA^LL600^XZ'
-    const label = Label.parse(zplInput, 300, 'mm')
+    const label = Label.parse(zplInput, 300, Units.Millimeter)
 
     expect(label.cfg.dpi).toBe(300)
-    expect(label.cfg.units).toBe('mm')
+    expect(label.cfg.units).toBe(Units.Millimeter)
   })
 
   test('Label should be immutable', () => {
@@ -87,7 +99,7 @@ describe('Text Functionality', () => {
     const zpl = result.toZPL()
 
     expect(zpl).toContain('^FO50,100')
-    expect(zpl).toContain('^AAN28,28')
+    expect(zpl).toContain('^AAN,28,28')
     expect(zpl).toContain('^FDHello World^FS')
   })
 
@@ -95,22 +107,22 @@ describe('Text Functionality', () => {
     const result = label.text({
       at: { x: 50, y: 100 },
       text: 'Test',
-      font: { family: 'B', h: 20, w: 15 }
+      font: { family: FontFamily.B, h: 20, w: 15 }
     })
     const zpl = result.toZPL()
 
-    expect(zpl).toContain('^ABN20,15')
+    expect(zpl).toContain('^ABN,20,15')
   })
 
   test('text() should handle rotation', () => {
     const result = label.text({
       at: { x: 50, y: 100 },
       text: 'Test',
-      rotate: 'R'
+      rotate: Orientation.Rotated90
     })
     const zpl = result.toZPL()
 
-    expect(zpl).toContain('^AAR28,28')
+    expect(zpl).toContain('^AAR,28,28')
   })
 
   test('text() should handle text wrapping', () => {
@@ -121,7 +133,7 @@ describe('Text Functionality', () => {
         width: 200,
         lines: 5,
         spacing: 2,
-        justify: 'C'
+        justify: Justify.Center
       }
     })
     const zpl = result.toZPL()
@@ -170,7 +182,7 @@ describe('Text Functionality', () => {
   })
 
   test('text() should handle unit conversion', () => {
-    const labelMM = Label.create({ w: 100, h: 150, units: 'mm', dpi: 300 })
+    const labelMM = Label.create({ w: 100, h: 150, units: Units.Millimeter, dpi: 300 })
     const result = labelMM.text({
       at: { x: 10, y: 15 }, // 10mm, 15mm
       text: 'Test'
@@ -192,7 +204,7 @@ describe('Barcode Functionality', () => {
   test('barcode() should create Code128 barcode', () => {
     const result = label.barcode({
       at: { x: 50, y: 100 },
-      type: 'Code128',
+      type: Barcode.Code128,
       data: '1234567890'
     })
     const zpl = result.toZPL()
@@ -205,7 +217,7 @@ describe('Barcode Functionality', () => {
   test('barcode() should create QRCode', () => {
     const result = label.barcode({
       at: { x: 50, y: 100 },
-      type: 'QRCode',
+      type: Barcode.QRCode,
       data: 'https://example.com',
       module: 4
     })
@@ -218,7 +230,7 @@ describe('Barcode Functionality', () => {
   test('barcode() should create EAN13', () => {
     const result = label.barcode({
       at: { x: 50, y: 100 },
-      type: 'EAN13',
+      type: Barcode.EAN13,
       data: '1234567890123',
       height: 80
     })
@@ -230,9 +242,9 @@ describe('Barcode Functionality', () => {
   test('barcode() should handle rotation', () => {
     const result = label.barcode({
       at: { x: 50, y: 100 },
-      type: 'Code39',
+      type: Barcode.Code39,
       data: 'TEST123',
-      rotate: 'I'
+      rotate: Orientation.Inverted180
     })
     const zpl = result.toZPL()
 
@@ -241,14 +253,14 @@ describe('Barcode Functionality', () => {
 
   test('barcode() should handle all barcode types', () => {
     const types = [
-      'Code128',
-      'Code39',
-      'EAN13',
-      'UPCA',
-      'ITF',
-      'PDF417',
-      'QRCode',
-      'DataMatrix'
+      Barcode.Code128,
+      Barcode.Code39,
+      Barcode.EAN13,
+      Barcode.UPCA,
+      Barcode.ITF,
+      Barcode.PDF417,
+      Barcode.QRCode,
+      Barcode.DataMatrix
     ] as const
 
     types.forEach((type) => {
@@ -289,7 +301,7 @@ describe('Box/Graphics Functionality', () => {
       at: { x: 50, y: 100 },
       size: { w: 200, h: 100 },
       border: 3,
-      fill: 'W'
+      fill: Fill.White
     })
     const zpl = result.toZPL()
 
@@ -297,7 +309,7 @@ describe('Box/Graphics Functionality', () => {
   })
 
   test('box() should handle unit conversion', () => {
-    const labelMM = Label.create({ w: 100, h: 150, units: 'mm', dpi: 203 })
+    const labelMM = Label.create({ w: 100, h: 150, units: Units.Millimeter, dpi: 203 })
     const result = labelMM.box({
       at: { x: 10, y: 15 },
       size: { w: 20, h: 25 }
@@ -322,12 +334,12 @@ describe('Convenience Methods', () => {
       at: { x: 50, y: 100 },
       text: 'Caption Text',
       size: 32,
-      family: 'B'
+      family: FontFamily.B
     })
     const zpl = result.toZPL()
 
     expect(zpl).toContain('^FO50,100')
-    expect(zpl).toContain('^ABN32,32')
+    expect(zpl).toContain('^ABN,32,32')
     expect(zpl).toContain('^FDCaption Text^FS')
   })
 
@@ -416,7 +428,7 @@ describe('Convenience Methods', () => {
     })
     const zpl = result.toZPL()
 
-    expect(zpl).toContain('^AAN24,24') // Default font: family=A, size=24
+    expect(zpl).toContain('^AAN,24,24') // Default font: family=A, size=24
     expect(zpl).toContain('^FO10,20') // First line
     expect(zpl).toContain('^FO10,44') // Second line (20 + default lineHeight=24)
   })
@@ -630,7 +642,7 @@ describe('Image Functionality', () => {
   })
 
   test('imageInline() should handle unit conversion', () => {
-    const labelMM = Label.create({ w: 100, h: 150, units: 'mm', dpi: 203 })
+    const labelMM = Label.create({ w: 100, h: 150, units: Units.Millimeter, dpi: 203 })
     const result = labelMM.imageInline({
       at: { x: 10, y: 15 }, // 10mm, 15mm
       rgba: mockRGBA,
@@ -681,13 +693,13 @@ describe('Integration Scenarios', () => {
       w: 400,
       h: 600,
       dpi: 203,
-      units: 'dot'
+      units: Units.Dot
     })
       .caption({
         at: { x: 50, y: 50 },
         text: 'PRIORITY MAIL',
         size: 32,
-        family: 'B'
+        family: FontFamily.B
       })
       .addressBlock({
         at: { x: 50, y: 120 },
@@ -703,7 +715,7 @@ describe('Integration Scenarios', () => {
       })
       .barcode({
         at: { x: 50, y: 450 },
-        type: 'Code128',
+        type: Barcode.Code128,
         data: '1234567890123',
         height: 100
       })
@@ -722,7 +734,7 @@ describe('Integration Scenarios', () => {
     const label = Label.create({
       w: 300,
       h: 200,
-      units: 'mm',
+      units: Units.Millimeter,
       dpi: 300
     })
       .caption({
@@ -757,7 +769,7 @@ describe('Integration Scenarios', () => {
       .text({
         at: { x: 50, y: 50 },
         text: 'Header Text',
-        font: { family: 'B', h: 28, w: 28 }
+        font: { family: FontFamily.B, h: 28, w: 28 }
       })
       .box({
         at: { x: 40, y: 80 },
@@ -766,12 +778,12 @@ describe('Integration Scenarios', () => {
       })
       .barcode({
         at: { x: 50, y: 100 },
-        type: 'QRCode',
+        type: Barcode.QRCode,
         data: 'QR Data'
       })
       .barcode({
         at: { x: 200, y: 100 },
-        type: 'Code128',
+        type: Barcode.Code128,
         data: 'BARCODE123'
       })
       .caption({
@@ -796,7 +808,11 @@ describe('Integration Scenarios', () => {
   test('should preserve immutability through chaining', () => {
     const baseLabel = Label.create({ w: 400, h: 600 })
     const withText = baseLabel.text({ at: { x: 50, y: 100 }, text: 'Test' })
-    const withBarcode = withText.barcode({ at: { x: 50, y: 150 }, type: 'Code128', data: '123' })
+    const withBarcode = withText.barcode({
+      at: { x: 50, y: 150 },
+      type: Barcode.Code128,
+      data: '123'
+    })
 
     // Each step should create a new instance
     expect(baseLabel).not.toBe(withText)
@@ -834,9 +850,9 @@ describe('Integration Scenarios', () => {
   })
 
   test('should handle different unit systems consistently', () => {
-    const dotLabel = Label.create({ w: 400, h: 600, units: 'dot', dpi: 203 })
-    const mmLabel = Label.create({ w: 100, h: 150, units: 'mm', dpi: 203 })
-    const inchLabel = Label.create({ w: 2, h: 3, units: 'in', dpi: 203 })
+    const dotLabel = Label.create({ w: 400, h: 600, units: Units.Dot, dpi: 203 })
+    const mmLabel = Label.create({ w: 100, h: 150, units: Units.Millimeter, dpi: 203 })
+    const inchLabel = Label.create({ w: 2, h: 3, units: Units.Inch, dpi: 203 })
 
     // All should produce similar label heights when converted
     const dotZPL = dotLabel.toZPL()
@@ -852,7 +868,7 @@ describe('Integration Scenarios', () => {
 describe('Global Settings Functionality', () => {
   test('setDefaultFont() should generate CF command with all parameters', () => {
     const label = Label.create({ w: 400, h: 600 }).setDefaultFont({
-      family: 'B',
+      family: FontFamily.B,
       height: 32,
       width: 24
     })
@@ -862,7 +878,10 @@ describe('Global Settings Functionality', () => {
   })
 
   test('setDefaultFont() should use height as width when width not specified', () => {
-    const label = Label.create({ w: 400, h: 600 }).setDefaultFont({ family: 'F', height: 60 })
+    const label = Label.create({ w: 400, h: 600 }).setDefaultFont({
+      family: FontFamily.F,
+      height: 60
+    })
 
     const zpl = label.toZPL()
     expect(zpl).toContain('^CFF,60,60')
@@ -870,7 +889,7 @@ describe('Global Settings Functionality', () => {
 
   test('setDefaultFont() should handle undefined width parameter', () => {
     const label = Label.create({ w: 400, h: 600 }).setDefaultFont({
-      family: 'A',
+      family: FontFamily.A,
       height: 28,
       width: undefined
     })
@@ -941,10 +960,10 @@ describe('Global Settings Functionality', () => {
 
   test('global settings should chain properly with other methods', () => {
     const label = Label.create({ w: 400, h: 600 })
-      .setDefaultFont({ family: 'B', height: 32 })
+      .setDefaultFont({ family: FontFamily.B, height: 32 })
       .text({ at: { x: 50, y: 50 }, text: 'Hello' })
       .setBarcodeDefaults({ moduleWidth: 5, height: 100 })
-      .barcode({ at: { x: 50, y: 100 }, type: 'Code128', data: '12345' })
+      .barcode({ at: { x: 50, y: 100 }, type: Barcode.Code128, data: '12345' })
 
     const zpl = label.toZPL()
 
