@@ -46,7 +46,11 @@
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
     "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
     "docs": "typedoc",
-    "docs:serve": "npx http-server docs"
+    "docs:serve": "npx http-server docs",
+    "examples:install": "cd examples && npm install",
+    "examples:dev": "cd examples && npm run dev",
+    "examples:build": "cd examples && npm run build",
+    "examples:preview": "cd examples && npm run preview"
   },
   "author": {
     "name": "Dustin Schie",
