@@ -22,7 +22,10 @@ export interface ProgramOptions {
 }
 
 export class ZPLProgram {
-  private constructor(private readonly tokens: Token[], private readonly cfg: { dpi: DPI; units: Units }) {}
+  private constructor(
+    private readonly tokens: Token[],
+    private readonly cfg: { dpi: DPI; units: Units },
+  ) {}
 
   static create(opts: ProgramOptions = {}): ZPLProgram {
     const dpi: DPI = (opts.dpi ?? 203) as DPI;
@@ -79,7 +82,7 @@ export class ZPLProgram {
 
   private resolveLabel(
     labelOrFactory: Label | ((label: Label) => Label),
-    opts?: LabelOptions
+    opts?: LabelOptions,
   ): Label {
     if (labelOrFactory instanceof Label) return labelOrFactory;
     if (!opts) throw new Error('Label options are required when supplying a factory function.');
@@ -93,7 +96,7 @@ const clamp = (value: number, min: number, max: number): number => {
 
 const buildPrinterConfigTokens = (
   cfg: { dpi: DPI; units: Units },
-  opts: PrinterConfigOpts
+  opts: PrinterConfigOpts,
 ): Token[] => {
   const commands: string[] = [];
 
@@ -104,8 +107,9 @@ const buildPrinterConfigTokens = (
   }
 
   if (opts.printSpeed != null || opts.slewSpeed != null || opts.backfeedSpeed != null) {
-    const parts = [opts.printSpeed, opts.slewSpeed, opts.backfeedSpeed]
-      .map((value) => (value == null ? '' : clamp(value, 0, 30).toString()));
+    const parts = [opts.printSpeed, opts.slewSpeed, opts.backfeedSpeed].map((value) =>
+      value == null ? '' : clamp(value, 0, 30).toString(),
+    );
     while (parts.length && parts[parts.length - 1] === '') parts.pop();
     if (parts.length) commands.push(`^PR${parts.join(',')}`);
   }

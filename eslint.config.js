@@ -1,13 +1,13 @@
-import eslintConfigPrettier from 'eslint-config-prettier'
-import pluginSecurity from 'eslint-plugin-security'
-import neostandard, { resolveIgnoresFromGitignore } from 'neostandard'
+import eslintConfigPrettier from 'eslint-config-prettier';
+import pluginSecurity from 'eslint-plugin-security';
+import neostandard, { resolveIgnoresFromGitignore } from 'neostandard';
 
 export default [
   // Base config with TypeScript and gitignore integration
   ...neostandard({
     ts: true,
     ignores: resolveIgnoresFromGitignore(),
-    filesTs: ['src/**/*.ts', '__tests__/**/*.ts']
+    filesTs: ['src/**/*.ts', '__tests__/**/*.ts'],
   }),
 
   // Security rules
@@ -30,12 +30,12 @@ export default [
       'n/hashbang': 'off',
 
       // Disable security warnings for test and image processing files
-      'security/detect-object-injection': 'off'
+      'security/detect-object-injection': 'off',
     },
     languageOptions: {
       ecmaVersion: 2024,
-      sourceType: 'module'
-    }
+      sourceType: 'module',
+    },
   },
 
   // Test files configuration
@@ -50,8 +50,8 @@ export default [
         afterEach: 'readonly',
         beforeAll: 'readonly',
         afterAll: 'readonly',
-        jest: 'readonly'
-      }
-    }
-  }
-]
+        jest: 'readonly',
+      },
+    },
+  },
+];

@@ -15,9 +15,9 @@ import { Label } from './core/label.js';
  * Template literals can include interpolated values using ${} syntax, which will be
  * inserted into the ZPL string before parsing.
  *
-  * @note Whitespace (including indentation) is preserved exactly as written. Align your template
-  * strings to column 0 if you do not want leading spaces emitted with your ZPL.
-  *
+ * @note Whitespace (including indentation) is preserved exactly as written. Align your template
+ * strings to column 0 if you do not want leading spaces emitted with your ZPL.
+ *
  * @example
  * ```typescript
  * import { label } from '@schie/fluent-zpl'

@@ -1,4 +1,4 @@
-import { defineConfig } from 'tsup'
+import { defineConfig } from 'tsup';
 
 export default defineConfig([
   {
@@ -14,14 +14,14 @@ export default defineConfig([
     outExtension(ctx) {
       return {
         dts: '.d.ts',
-        js: ctx.format === 'cjs' ? '.cjs' : '.mjs'
-      }
+        js: ctx.format === 'cjs' ? '.cjs' : '.mjs',
+      };
     },
     treeshake: true,
     target: 'es2022',
     platform: 'node',
     tsconfig: './tsconfig.json',
     cjsInterop: true,
-    keepNames: true
-  }
-])
+    keepNames: true,
+  },
+]);

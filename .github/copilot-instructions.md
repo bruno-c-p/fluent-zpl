@@ -7,7 +7,7 @@ This repository houses a TypeScript library for generating Zebra Programming Lan
 **Latest highlights**
 
 - ✅ `ZPLProgram` orchestrates printer/media setup, diagnostics, and multiple labels in one payload
-- ✅ `label\`...\`` tagged template (formerly `zpl`) parses existing formats directly into `Label`
+- ✅ `label\`...\``tagged template (formerly`zpl`) parses existing formats directly into `Label`
 - ✅ Shared RFID helpers cover EPC/USER/TID plus HostBuffer reads with validation guards
 - ✅ Jest suite: 11 suites / 246 tests / 17 snapshots — 100% statements, branches, functions, lines
 - ✅ Documentation updated for program-level workflows and new templating API
@@ -65,7 +65,7 @@ src/
 
 ### Tagged template (`src/label-template.ts`)
 
-- `label\`...\`` parses compacted ZPL into a `Label`
+- `label\`...\``parses compacted ZPL into a`Label`
 - `label.withOptions({ dpi, units })` overrides parsing context
 
 ### Token pipeline (`src/core/parse.ts`, `src/core/emit.ts`)

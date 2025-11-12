@@ -106,7 +106,7 @@ const program = ZPLProgram.create()
           height: 100,
         })
         .rfid({ epc: '300833B2DDD9014000000000' }),
-    { w: 400, h: 600 }
+    { w: 400, h: 600 },
   )
   .rfidRead({ bank: RFIDBank.HostBuffer }); // emits ^RFR,H (read last write)
 
