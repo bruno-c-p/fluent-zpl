@@ -5,5 +5,9 @@
   "out": "docs",
   "excludePrivate": true,
   "excludeExternals": true,
-  "includeVersion": true
+  "includeVersion": true,
+  "navigationLinks": {
+    "GitHub": "https://github.com/schie/fluent-zpl",
+    "npm": "https://www.npmjs.com/package/@schie/fluent-zpl"
+  }
 }
