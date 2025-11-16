@@ -10,13 +10,18 @@
  * Dithering modes supported when converting RGBA to monochrome.
  *
  * @remarks
- * The following dithering modes are available:
- * - 'none': No dithering; direct thresholding.
- * - 'threshold': Simple thresholding based on a specified threshold value.
- * - 'fs': Floyd-Steinberg dithering for better visual quality.
- * - 'ordered': Ordered dithering using a 4x4 Bayer matrix.
+ * The string values mirror the underlying encoder switches:
+ * - `DitherMode.None` (`'none'`): No dithering; direct thresholding.
+ * - `DitherMode.Threshold` (`'threshold'`): Simple thresholding with a cutoff value.
+ * - `DitherMode.FloydSteinberg` (`'fs'`): Floyd–Steinberg error diffusion.
+ * - `DitherMode.Ordered` (`'ordered'`): Ordered dithering using a 4×4 Bayer matrix.
  */
-export type DitherMode = 'none' | 'threshold' | 'fs' | 'ordered';
+export enum DitherMode {
+  None = 'none',
+  Threshold = 'threshold',
+  FloydSteinberg = 'fs',
+  Ordered = 'ordered',
+}
 
 export interface MonoOptions {
   /** Dithering / quantization strategy. Default: "threshold" */
@@ -80,7 +85,7 @@ export interface EncodeDGResult {
  */
 export function monoFromRGBA(params: FromRGBAParams): MonoBitmap {
   const { rgba, width, height, threshold = 200, invert = false } = params;
-  const mode: DitherMode = params.mode ?? 'threshold';
+  const mode: DitherMode = params.mode ?? DitherMode.Threshold;
 
   // 1) Grayscale luminance (0..255) into a temp buffer
   const lum = new Uint8Array(width * height);
@@ -95,14 +100,14 @@ export function monoFromRGBA(params: FromRGBAParams): MonoBitmap {
   // 2) Dither / threshold to binary (0/1) into temp boolean-ish buffer
   const monoBits = new Uint8Array(width * height);
   switch (mode) {
-    case 'none':
-    case 'threshold':
+    case DitherMode.None:
+    case DitherMode.Threshold:
       binarizeThreshold(lum, monoBits, width, height, threshold);
       break;
-    case 'fs':
+    case DitherMode.FloydSteinberg:
       ditherFloydSteinberg(lum, monoBits, width, height, threshold);
       break;
-    case 'ordered':
+    case DitherMode.Ordered:
       ditherOrdered4x4(lum, monoBits, width, height, threshold);
       break;
   }

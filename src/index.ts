@@ -46,4 +46,4 @@ export type {
 
 // Image-related types
 export type { ImageCachedOpts, ImageInlineOpts } from './image/api.js';
-export type { DitherMode } from './image/encoder.js';
+export { DitherMode } from './image/encoder.js';

@@ -5,7 +5,7 @@
 import type { DPI, Token, Units } from '../_types.js';
 import { toDots } from '../_unit-helpers.js';
 import { tokenizeZPL } from '../core/parse.js';
-import { encodeDG, encodeGF, monoFromRGBA, type DitherMode } from './encoder.js';
+import { encodeDG, encodeGF, monoFromRGBA, DitherMode } from './encoder.js';
 
 /**
  * Options for inline images.
@@ -50,7 +50,7 @@ export function buildImageInlineTokens(
     rgba: opts.rgba,
     width: opts.width,
     height: opts.height,
-    mode: opts.mode ?? 'threshold',
+    mode: opts.mode ?? DitherMode.Threshold,
     threshold: opts.threshold,
     invert: opts.invert,
   });
@@ -74,7 +74,7 @@ export function buildImageCachedTokens(
     rgba: opts.rgba,
     width: opts.width,
     height: opts.height,
-    mode: opts.mode ?? 'threshold',
+    mode: opts.mode ?? DitherMode.Threshold,
     threshold: opts.threshold,
     invert: opts.invert,
   });

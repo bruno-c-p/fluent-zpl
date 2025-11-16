@@ -1,6 +1,7 @@
 // Image functionality tests - comprehensive coverage for image encoding
 
 import {
+  DitherMode,
   buildDGAndRecall,
   buildGFAt,
   clamp255,
@@ -8,7 +9,6 @@ import {
   encodeGF,
   monoFromImageData,
   monoFromRGBA,
-  type DitherMode,
   type MonoBitmap,
 } from '../../src/image/encoder.js';
 
@@ -39,7 +39,7 @@ describe('Image Encoder', () => {
         rgba,
         width: 2,
         height: 2,
-        mode: 'threshold',
+        mode: DitherMode.Threshold,
         threshold: 200,
       });
 
@@ -69,7 +69,12 @@ describe('Image Encoder', () => {
         255, // Gray pixels
       ]);
 
-      const modes: DitherMode[] = ['none', 'threshold', 'fs', 'ordered'];
+      const modes: DitherMode[] = [
+        DitherMode.None,
+        DitherMode.Threshold,
+        DitherMode.FloydSteinberg,
+        DitherMode.Ordered,
+      ];
 
       modes.forEach((mode) => {
         const mono = monoFromRGBA({
@@ -349,7 +354,7 @@ describe('Image Encoder', () => {
         rgba,
         width: 2,
         height: 1,
-        mode: 'fs', // Floyd-Steinberg dithering can create values outside 0-255 range
+        mode: DitherMode.FloydSteinberg, // Floyd-Steinberg dithering can create values outside 0-255 range
       });
 
       // Should handle the input without errors and produce valid output
@@ -432,7 +437,7 @@ describe('clamp255 edge cases', () => {
       rgba,
       width: 2,
       height: 1,
-      mode: 'threshold',
+      mode: DitherMode.Threshold,
       threshold: 128,
     });
 
@@ -450,7 +455,7 @@ describe('clamp255 edge cases', () => {
       rgba,
       width: 4,
       height: 2,
-      mode: 'fs',
+      mode: DitherMode.FloydSteinberg,
       threshold: 127,
     });
 
@@ -480,7 +485,7 @@ describe('clamp255 edge cases', () => {
       rgba,
       width: size,
       height: size,
-      mode: 'fs',
+      mode: DitherMode.FloydSteinberg,
     });
 
     expect(mono.width).toBe(size);
@@ -502,7 +507,11 @@ describe('clamp255 edge cases', () => {
       rgba[i + 3] = 255;
     }
 
-    const modes: DitherMode[] = ['fs', 'ordered', 'threshold'];
+    const modes: DitherMode[] = [
+      DitherMode.FloydSteinberg,
+      DitherMode.Ordered,
+      DitherMode.Threshold,
+    ];
 
     for (const mode of modes) {
       const mono = monoFromRGBA({
@@ -529,7 +538,7 @@ describe('clamp255 edge cases', () => {
       rgba,
       width: 8,
       height: 2,
-      mode: 'fs',
+      mode: DitherMode.FloydSteinberg,
       threshold: 127,
     });
 

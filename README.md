@@ -119,7 +119,7 @@ const payload = program
 console.log(payload);
 ```
 
-`ZPLProgram` keeps track of the same DPI/unit context as your labels, so printer/media measurements (`^PW`, `^LH`, etc.) stay consistent. A single program can now cover:
+`ZPLProgram` keeps track of the same DPI/unit context as your labels, so printer/media measurements (`^PW`, `^LH`, etc.) stay consistent. Pass `{ dpi, units }` to `ZPLProgram.create` when you need to match a different printer resolution—every downstream helper (including `.label(...)`) inherits those settings. A single program can now cover:
 
 - Label formats and layout (`.label(...)`)
 - Printer/media configuration (`.printerConfig(...)`)
@@ -218,6 +218,17 @@ label
   .barcode({ at: { x: 50, y: 200 }, type: Barcode.Code39, data: 'ABC123' })
   .barcode({ at: { x: 50, y: 250 }, type: Barcode.EAN13, data: '1234567890123' })
   .barcode({ at: { x: 50, y: 300 }, type: Barcode.DataMatrix, data: 'Data' });
+
+// GS1-128 helper converts AI maps into the right ^BC payload (FNC1 + GS handling)
+label.gs1_128({
+  at: { x: 50, y: 360 },
+  ai: {
+    '01': '09506000134352', // GTIN (fixed-length)
+    '10': 'BATCH-42', // Lot/batch (variable-length)
+    '17': '250101', // Expiration date (YYMMDD)
+  },
+  height: 120,
+});
 ```
 
 ### Graphics and Layout
@@ -251,24 +262,33 @@ label
 ### Images
 
 ```typescript
+import { DitherMode, type ImageInlineOpts, type ImageCachedOpts } from '@schie/fluent-zpl';
+
 // Inline image (^GF command)
-label.imageInline({
+const inlineLogo: ImageInlineOpts = {
   at: { x: 50, y: 100 },
   rgba: imageData, // Uint8Array of RGBA pixels
   width: 100,
   height: 100,
-  threshold: 128, // Monochrome conversion threshold
-});
+  mode: DitherMode.FloydSteinberg,
+  threshold: 180, // Optional threshold overrides
+  invert: false, // Flip black/white if needed
+};
 
-// Cached image (~DG + ^XG commands)
-label.image({
+label.imageInline(inlineLogo);
+
+// Cached image (~DG + ^XG commands) inherits all ImageInlineOpts fields
+const cachedStamp: ImageCachedOpts = {
+  ...inlineLogo,
   at: { x: 200, y: 100 },
-  rgba: logoData,
-  width: 50,
-  height: 50,
+  mode: DitherMode.Ordered,
   name: 'R:LOGO.GRF', // Printer storage name
-});
+};
+
+label.image(cachedStamp);
 ```
+
+Both helpers accept RGBA input and offer multiple dithering strategies via the `DitherMode` enum (`Threshold`, `FloydSteinberg`, `Ordered`, or `None`) plus optional `threshold` and `invert` controls so you can tune contrast for the target media. Because `ImageCachedOpts` extends `ImageInlineOpts`, every inline option (including `mode`) carries over to cached assets automatically.
 
 ### RFID and EPC
 
@@ -401,11 +421,12 @@ const parsedLabel = label.withOptions({ dpi: 300, units: Units.Millimeter })`
 ### Unit Conversion
 
 ```typescript
-import { mm, inch, toDots } from '@schie/fluent-zpl';
+import { dot, mm, inch, toDots } from '@schie/fluent-zpl';
 
 // Convert units to dots
 const x = mm(25.4, 203); // 25.4mm at 203 DPI = 203 dots
 const y = inch(1, 203); // 1 inch at 203 DPI = 203 dots
+const spacing = dot(40); // Explicit dots helper for readability
 
 // Generic conversion
 const pos = toDots(50, 203, Units.Millimeter); // 50mm to dots at 203 DPI
@@ -469,7 +490,7 @@ const productLabel = Label.create({ w: 100, h: 75, units: Units.Millimeter, dpi:
 ### RFID Asset Tag
 
 ```typescript
-const assetTag = Label.create({ w: 4, h: 2, units: Units.Inches, dpi: 203 })
+const assetTag = Label.create({ w: 4, h: 2, units: Units.Inch, dpi: 203 })
   .text({
     at: { x: 0.25, y: 0.25 },
     text: 'ASSET TAG',
@@ -500,7 +521,7 @@ const assetTag = Label.create({ w: 4, h: 2, units: Units.Inches, dpi: 203 })
 ### Complex Shipping Label with Global Settings
 
 ```typescript
-const complexLabel = Label.create({ w: 800, h: 1200, units: Units.Dots, dpi: 203 })
+const complexLabel = Label.create({ w: 800, h: 1200, units: Units.Dot, dpi: 203 })
   .comment('Top section with logo and company info')
   .setDefaultFont({ family: FontFamily.F, height: 60 })
 
@@ -610,6 +631,7 @@ const zpl = label.toZPL();
   - `.box(opts)` - Add graphics box (supports `reverse: true` for ^FR)
   - `.caption(opts)` - Add simple text
   - `.qr(opts)` - Add QR code
+  - `.gs1_128(opts)` - Emit GS1-128 via Code 128 with automatic FNC1 handling
   - `.addressBlock(opts)` - Add multi-line text
   - `.imageInline(opts)` - Add inline image
   - `.image(opts)` - Add cached image
