@@ -76,6 +76,7 @@ import {
   ZPLProgram,
   PrinterMode,
   MediaTracking,
+  PrinterConfig,
   PrinterConfiguration,
   Label,
   FontFamily,
@@ -119,6 +120,23 @@ const payload = program
   .toZPL();
 
 console.log(payload);
+```
+
+Or use the fluent printer config builder when you want to compose setup steps:
+
+```typescript
+const config = PrinterConfig.create()
+  .mode(PrinterMode.TearOff)
+  .mediaTracking(MediaTracking.NonContinuous)
+  .printWidth(inch(3, 300))
+  .printSpeed(4)
+  .darkness(10)
+  .labelHome({ x: 0, y: 0 })
+  .save(); // ^JUS
+
+const zpl = ZPLProgram.create().printerConfig(config.build()).toZPL();
+// => ^MMT^MNY^PW900^PR4^MD10^LH0,0^JUS
+// Or send config.toZPL() directly if you only need the setup block
 ```
 
 `ZPLProgram` keeps track of the same DPI/unit context as your labels, so printer/media measurements (`^PW`, `^LH`, etc.) stay consistent. Pass `{ dpi, units }` to `ZPLProgram.create` when you need to match a different printer resolution—every downstream helper (including `.label(...)`) inherits those settings. A single program can now cover:

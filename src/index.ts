@@ -5,6 +5,8 @@
 export { Label } from './core/label.js';
 export { ZPLProgram } from './core/program.js';
 export type { ProgramOptions } from './core/program.js';
+export { PrinterConfig } from './core/printer-config.js';
+export type { PrinterConfigBuilderOptions } from './core/printer-config.js';
 
 // Unit helpers
 export { dot, inch, mm, toDots } from './_unit-helpers.js';
