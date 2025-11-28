@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.5.0](https://github.com/bruno-c-p/fluent-zpl/compare/v0.9.0...v0.5.0) (2025-11-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* renames `zpl` tagged template literal to `label`
+* String literals like 'A', 'B', 'Code128', 'mm' are now enums (FontFamily.A, Barcode.Code128, Units.Millimeter)
+
+### Features
+
+* adding `ZPLProgram`, renaming `zpl` tagged template, some updates to label, etc ([7a5d6dc](https://github.com/bruno-c-p/fluent-zpl/commit/7a5d6dc479dca45e985dc952b44b01276a85145f))
+* adding comprehensive ZPL enhancements, type-safety improvements ([65a28d9](https://github.com/bruno-c-p/fluent-zpl/commit/65a28d986070c3e05c2a5383bd796096f76bd369))
+* adding PrinterConfig ([7b41e2f](https://github.com/bruno-c-p/fluent-zpl/commit/7b41e2f7a8dff18a0a2b0cd1635617dd23ad6fcb))
+* **core/label:** addubg ZPL comment and metadata support ([778a6b8](https://github.com/bruno-c-p/fluent-zpl/commit/778a6b8b6a871f109cd86c7e7f1caa61cf02c611))
+* exporting union types for enhanced typescript support ([8f15031](https://github.com/bruno-c-p/fluent-zpl/commit/8f150317e13a2cd36417255953e594e2c5598fd3))
+* **image/encoder.ts:** exporting clamp255 utility fn for easier testing ([0a3287f](https://github.com/bruno-c-p/fluent-zpl/commit/0a3287f7b10f387a199b204cbe6abe19f1edd5de))
+* **label:** adding `.setDefaultFont(...)` and `.setBarcodeDefaults(...)` ([abc0923](https://github.com/bruno-c-p/fluent-zpl/commit/abc092373d7d810d2ed1caba8d9046cbb79f74d6))
+* **label:** adding support for a Reverse Box ([288e68e](https://github.com/bruno-c-p/fluent-zpl/commit/288e68e60522f8752e5cb1401a5ef82bf6978bee))
+* replacing `type DiterMode` with `enum DitherMode` ([341c1fe](https://github.com/bruno-c-p/fluent-zpl/commit/341c1fe6f1eef79a14c8f1a94fd49f1ef1a65bba))
+* support hanging indent in text wrapping ([de8118c](https://github.com/bruno-c-p/fluent-zpl/commit/de8118c181d9ccd832a56ab08262ea2056b16a03))
+* **zplprogram:** adding load/save configuration to printer config ([7ee51cb](https://github.com/bruno-c-p/fluent-zpl/commit/7ee51cb46084f53a97125d450d9bcd59d96c813d))
+
+
+### Bug Fixes
+
+* **label-template:** preserving whitespace verbatim ([30e1a39](https://github.com/bruno-c-p/fluent-zpl/commit/30e1a393728d14cba64f9d86af07a913749a68bd))
+* removing CLI vestiges ([9441e3c](https://github.com/bruno-c-p/fluent-zpl/commit/9441e3cc622d030d6638123e1db1c4a3c5a50137))
+* resolving ESM import paths and cleaning exports ([f74dbab](https://github.com/bruno-c-p/fluent-zpl/commit/f74dbabf6934b7b94ebf05fa3e42afae13b7aaca))
+
+
+### Miscellaneous Chores
+
+* release 0.1.0 ([caa3afc](https://github.com/bruno-c-p/fluent-zpl/commit/caa3afc2b159e0bfc6f7ed0866a3db783b67be40))
+* v0.5.0 ([6658999](https://github.com/bruno-c-p/fluent-zpl/commit/6658999715805daffbb7ad66accf0ad1986721bf))
+
 ## [0.9.0](https://github.com/schie/fluent-zpl/compare/v0.8.0...v0.9.0) (2025-11-26)
 
 
